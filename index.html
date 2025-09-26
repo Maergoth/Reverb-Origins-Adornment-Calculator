@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Updated title to reflect Reverb Origins branding -->
+  <title>Reverb Origins Adornment Calculator</title>
+  <style>
+    /* Root variables for easy theming */
+    :root {
+      /* Updated color palette for the Reverb Origins theme (black, orange and red). */
+      --background-color: #111111;
+      --surface-color: #1a1a1a;
+      --primary-color: #c62828; /* deep red for primary UI elements */
+      --accent-color: #ff9800; /* orange accent colour */
+      --text-color: #f5f5f5;
+      --border-color: #333333;
+      --header-height: 60px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.5;
+      font-size: 16px;
+      overflow-x: hidden; /* prevent horizontal scrolling on small screens */
+    }
+
+    header {
+      /* Dark header with subtle gradient for a modern look */
+      background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+      color: var(--text-color);
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      border-bottom: 2px solid #000; /* black outline for better contrast */
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 600;
+      /* Remove text shadow on the main title.  Dark text on a light gradient
+         does not require a drop shadow and the blur can reduce clarity. */
+      /* outline the main title slightly using text stroke for contrast */
+      -webkit-text-stroke: 0.5px #000;
+    }
+
+    /* Add subtle separators for section headings to improve contrast on dark
+       backgrounds.  This gives each h2 a thin black line underneath and
+       slightly separates it from the content that follows. */
+    h2 {
+      border-bottom: 1px solid #000;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+
+    /* Subheader styling beneath the main title */
+    .subheader {
+      margin: 5px 0 0 0;
+      /* Increase the subheader font size and weight to make the Discord
+         invitation more pronounced.  Retain the underline to aid
+         readability and emphasise the link. */
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--accent-color);
+      text-decoration: underline;
+    }
+
+    .container {
+      /* Allow the container to grow a little wider on large screens.  It will
+         still centre itself, but will better utilise available horizontal
+         space to prevent columns from feeling cramped. */
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .filters label {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+
+    thead {
+      background-color: var(--primary-color);
+      color: var(--surface-color);
+      border-bottom: 2px solid #000; /* outline for table header */
+    }
+
+    thead th {
+      border-left: 1px solid #000;
+      border-right: 1px solid #000;
+      /* Removed drop shadow on header text.  Shadows on dark text can make
+         lettering appear blurry, so they are omitted for clarity. */
+    }
+
+    th, td {
+      padding: 4px 6px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+      /* Allow text to wrap within cells to prevent widening the table */
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #1e1e1e;
+    }
+
+    tbody tr:hover {
+      background-color: #2a2a2a;
+    }
+
+    /* Calculator styles */
+    .calculator {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .calc-grid {
+      overflow-x: auto;
+    }
+
+    .calc-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .calc-table th, .calc-table td {
+      padding: 6px 8px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .calc-table th {
+      background-color: var(--primary-color);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .results {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .result-card {
+      flex: 1;
+      min-width: 200px;
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .result-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      color: var(--primary-color);
+    }
+
+    .result-card p {
+      margin: 4px 0;
+      font-size: 16px;
+    }
+
+    /* Styles for breakdown lists within the result cards */
+    .result-card ul {
+      list-style: none;
+      margin: 4px 0 0 0;
+      padding: 0;
+    }
+    .result-card li {
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    /* Footnotes */
+    .footnotes {
+      font-size: 12px;
+      margin-top: 40px;
+      color: #555;
+    }
+    .footnotes a {
+      color: var(--primary-color);
+    }
+    .footnotes li {
+      margin-bottom: 6px;
+    }
+
+    /* Buttons for adding/removing adornments to the crafting list */
+    .btn-add, .btn-remove {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 0 2px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-remove {
+      background-color: #dc3545; /* red tone for remove */
+    }
+    .item-count {
+      margin: 0 4px;
+      font-weight: bold;
+    }
+
+    /* Styling for the crafting summary table */
+    #crafting-summary-section table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    #crafting-summary-section th, #crafting-summary-section td {
+      border: 1px solid var(--border-color);
+      padding: 6px 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    /* Hover controls for tier cells */
+    /* Interactive tier cells: each cell acts as a relative container. */
+    .tier-cell {
+      position: relative;
+      /* Elastic width: allow cells to grow based on available space while keeping a minimum size.  By
+         increasing the base width percentage, the tier columns will better adapt to different
+         screen sizes without crowding the content. */
+      width: 10%;
+      min-width: 70px;
+      padding: 4px 6px;
+      vertical-align: middle;
+    }
+    /* Count badge shown when an adornment has been added to this tier */
+    .tier-cell .cell-count {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      font-size: 11px;
+      background-color: #28a745;
+      color: #fff;
+      border-radius: 50%;
+      padding: 1px 4px;
+      display: none; /* hidden until there is a count */
+    }
+    /* Remove hover controls styling now that we use click actions instead of +/− buttons. */
+    .tier-cell .hover-controls {
+      display: none;
+    }
+    /* Style for the plus and minus buttons */
+    .hover-controls button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: 2px;
+    }
+    .hover-controls button.hover-plus {
+      margin-left: 0;
+    }
+    .hover-controls button.hover-minus {
+      background-color: #dc3545;
+    }
+    /* Info icon used for tooltips. Displayed inline with section headings. */
+    .info-icon {
+      display: inline-block;
+      margin-left: 6px;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: var(--accent-color);
+      color: var(--surface-color);
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+    }
+    .info-icon:hover {
+      opacity: 0.8;
+    }
+
+    /* The :after pseudo element for info icons has been removed in favour of
+       click-activated tooltips implemented in JavaScript. */
+    /* Column width adjustments for the first few columns in the adornment table to fit within 1200px. */
+    #adornmentTable th:nth-child(1),
+    #adornmentTable td:nth-child(1) {
+      min-width: 90px;
+    }
+    #adornmentTable th:nth-child(2),
+    #adornmentTable td:nth-child(2) {
+      min-width: 120px;
+      max-width: 160px;
+      white-space: normal;
+      word-break: break-word;
+    }
+    #adornmentTable th:nth-child(3),
+    #adornmentTable td:nth-child(3) {
+      min-width: 90px;
+    }
+    #adornmentTable th:nth-child(4),
+    #adornmentTable td:nth-child(4) {
+      min-width: 110px;
+    }
+    #adornmentTable th:nth-child(12),
+    #adornmentTable td:nth-child(12) {
+      min-width: 50px;
+    }
+
+    /* Export button styling.  Appears within the Crafting Materials Summary header. */
+    .export-btn {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 6px 12px;
+      background-color: var(--accent-color);
+      color: var(--surface-color);
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .export-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Full-screen overlay for tooltips.  When visible, this layer covers the
+       entire screen and centres a square tooltip box.  The overlay is hidden
+       by default and toggled via JavaScript when the info icons are clicked. */
+    .tooltip-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+    }
+    .tooltip-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: var(--surface-color);
+      color: var(--text-color);
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      padding: 20px;
+      /* Make the tooltip box a square and centre it on screen.  A fixed
+         width/height prevents the content from shifting the box location.
+         Scrollbars appear if the message exceeds the box height. */
+      width: 320px;
+      height: 320px;
+      max-width: 90%;
+      overflow-y: auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    .tooltip-box .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--accent-color);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Reverb Origins Adornment Calculator</h1>
+    <!-- Make the Discord invitation link stand out by giving it a bold weight
+         and an underline.  Inline styles are used here to override default
+         anchor styles within the subheader. -->
+    <p class="subheader">Origins discussion at <a href="https://discord.gg/reverb" style="color: var(--accent-color); text-decoration: underline; font-weight: bold;">discord.gg/reverb</a></p>
+  </header>
+  <div class="container">
+    <!-- Transmuting yield calculator comes first so users can estimate materials before browsing the adornments table. -->
+    <section id="calculator-section" class="calculator">
+      <h2>Transmuting Yield Calculator
+        <span class="info-icon" data-tooltip="Enter how many Treasured, Legendary and Fabled items you plan to transmute for each tier. Each transmute can produce either a single lower‑rarity component (75%), a single higher‑rarity component (20%) or one of each (5%). This tool multiplies your inputs by the resulting average yields – roughly 0.80 of the lower‑rarity material and 0.25 of the higher‑rarity material per transmute – and does not simulate randomness or perform any material conversions.">i</span>
+      </h2>
+      <div class="calc-grid">
+        <table class="calc-table" id="calcTable">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Treasured<br>Items</th>
+              <th>Legendary<br>Items</th>
+              <th>Fabled<br>Items</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+      <div class="results" id="calcResults">
+        <!-- Dynamic result cards will appear here -->
+      </div>
+    </section>
+
+    <!-- Summary of crafting materials required for selected adornments. This section is populated dynamically by JavaScript. -->
+    <section id="crafting-summary-section" class="calculator" style="margin-top: 20px;">
+      <h2>Crafting Materials Summary
+        <span class="info-icon" data-tooltip="Left‑click a value in any tier column to add one of that adornment to your crafting list. Right‑click to remove one. This summary shows the total quantities of each material required for all selected adornments. When no items are selected, you’ll still see a couple of placeholder rows to prevent the table from jumping as you make selections.">i</span>
+      </h2>
+      <button id="exportButton" class="export-btn">Export</button>
+      <div id="craftingSummary">
+        <!-- Dynamic material summary will be inserted here -->
+      </div>
+    </section>
+    
+    <!-- Adornments lookup comes after the calculator. -->
+    <section id="adornments-section">
+      <h2>Adornments Lookup
+        <span class="info-icon" data-tooltip="Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
+      </h2>
+      <div class="filters">
+        <div>
+          <label for="slotFilter">Slot:</label>
+          <select id="slotFilter"></select>
+        </div>
+        <div>
+          <label for="tierFilter">Tier:</label>
+          <select id="tierFilter"></select>
+        </div>
+        <div>
+          <label for="crafterFilter">Crafter:</label>
+          <select id="crafterFilter"></select>
+        </div>
+        <div>
+          <label for="keywordFilter">Keyword:</label>
+          <input type="text" id="keywordFilter" placeholder="Type to search">
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="adornmentTable">
+          <thead>
+            <tr>
+              <th>Slot</th>
+              <th>Name</th>
+              <th>Made By</th>
+              <th>Stat</th>
+              <th>Flickering</th>
+              <th>Shimmering</th>
+              <th>Sparkling</th>
+              <th>Glimmering</th>
+              <th>Luminous</th>
+              <th>Lambent</th>
+              <th>Scintillating</th>
+              <th>Quality</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <!-- Footnotes removed to declutter the page -->
+  </div>
+
+  <script>
+    // Embedded data (generated from CSVs)
+    const adornmentsData = [{"slot": "Any Weapon", "name": "Magi's Second Sight", "madeBy": "Transmuter", "stat": "Damage Spell Crit Chance", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": "1%", "Scintillating": null, "quality": "Fabled"}, {"slot": "Chest", "name": "Mystic Applique", "madeBy": "Alchemist", "stat": "vs. Magic", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Legendary"}, {"slot": "Chest", "name": "Prismatic Applique", "madeBy": "Alchemist", "stat": "Str/Sta/Agi/Wis/Int", "Flickering": null, "Shimmering": "1", "Sparkling": "2", "Glimmering": "3", "Luminous": "4", "Lambent": "5", "Scintillating": "6", "quality": "Legendary"}, {"slot": "Chest", "name": "Psychic Applique", "madeBy": "Alchemist", "stat": "vs. Mental", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Legendary"}, {"slot": "Chest", "name": "Robust Applique", "madeBy": "Alchemist", "stat": "In-Combat Power Regen", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": "1", "Lambent": null, "Scintillating": null, "quality": "Fabled"}, {"slot": "Cloak", "name": "Silver Lining", "madeBy": "Tailor", "stat": "Reduced Falling Damage", "Flickering": "5%", "Shimmering": "10%", "Sparkling": "15%", "Glimmering": "20%", "Luminous": "25%", "Lambent": "30%", "Scintillating": "35%", "quality": "Treasured"}, {"slot": "Cloak", "name": "Hygenic Lining", "madeBy": "Tailor", "stat": "In-Combat Health Regen", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "1", "Luminous": null, "Lambent": "2", "Scintillating": "3", "quality": "Legendary"}, {"slot": "Cloak", "name": "Metaphysical Lining", "madeBy": "Tailor", "stat": "In-Combat Power Regen", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "1", "Luminous": null, "Lambent": "2", "Scintillating": "3", "quality": "Legendary"}, {"slot": "Crushing Weapon", "name": "Molten Binding", "madeBy": "Transmuter", "stat": "Heat Proc (DoT)", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Crushing Weapon", "name": "Molten Counterweight", "madeBy": "Weaponsmith", "stat": "Heat Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Crushing Weapon", "name": "Viral Binding", "madeBy": "Transmuter", "stat": "Slow + Disease Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Crushing Weapon", "name": "Viral Counterweight", "madeBy": "Weaponsmith", "stat": "Disease Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Crushing Weapon", "name": "Weighted Counterweight", "madeBy": "Weaponsmith", "stat": "Crushing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Ear", "name": "Arctic Backing", "madeBy": "Jeweller", "stat": "vs. Cold", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ear", "name": "Fiery Backing", "madeBy": "Jeweller", "stat": "vs. Heat", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ear", "name": "Holy Backing", "madeBy": "Jeweller", "stat": "vs. Divine", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ear", "name": "Intellectual Backing", "madeBy": "Jeweller", "stat": "Int", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Ear", "name": "Mystic Backing", "madeBy": "Jeweller", "stat": "vs. Magic", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ear", "name": "Psychic Backing", "madeBy": "Jeweller", "stat": "vs. Mental", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ear", "name": "Septic Backing", "madeBy": "Jeweller", "stat": "vs. Disease", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ear", "name": "Venom Laced Backing", "madeBy": "Jeweller", "stat": "vs. Poison", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Feet", "name": "Agile Spurs", "madeBy": "Armourer", "stat": "Agi", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Feet", "name": "Arctic Spurs", "madeBy": "Armourer", "stat": "vs. Cold", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Feet", "name": "Gritty Spurs", "madeBy": "Armourer", "stat": "Sta", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Forearms", "name": "Arctic Splint", "madeBy": "Armourer", "stat": "vs. Cold", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Forearms", "name": "Glancing Splint", "madeBy": "Armourer", "stat": "Parry", "Flickering": "1", "Shimmering": "2", "Sparkling": "3", "Glimmering": "4", "Luminous": "5", "Lambent": "6", "Scintillating": "7", "quality": "Fabled"}, {"slot": "Forearms", "name": "Mystic Splint", "madeBy": "Armourer", "stat": "vs. Magic", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Forearms", "name": "Reinforced Splint", "madeBy": "Armourer", "stat": "vs. Magic", "Flickering": "7", "Shimmering": "17", "Sparkling": "27", "Glimmering": "37", "Luminous": "47", "Lambent": "57", "Scintillating": "67", "quality": "Legendary"}, {"slot": "Forearms", "name": "Savvy Splint", "madeBy": "Armourer", "stat": "Wis", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Hand", "name": "Agile Stiching", "madeBy": "Tailor", "stat": "Agi", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Hand", "name": "Fast Action Stiching", "madeBy": "Tailor", "stat": "Ranged Crit", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": "1", "Scintillating": null, "quality": "Fabled"}, {"slot": "Hand", "name": "Occult Stiching", "madeBy": "Tailor", "stat": "Spell Damage", "Flickering": null, "Shimmering": null, "Sparkling": "5", "Glimmering": "10", "Luminous": null, "Lambent": "20", "Scintillating": "25", "quality": "Fabled"}, {"slot": "Hand", "name": "Resorative Stiching", "madeBy": "Tailor", "stat": "Heal Spells", "Flickering": "10", "Shimmering": "15", "Sparkling": "20", "Glimmering": "25", "Luminous": "30", "Lambent": "35", "Scintillating": "40", "quality": "Legendary"}, {"slot": "Head", "name": "Epiphanic Imprint", "madeBy": "Tailor", "stat": "Power", "Flickering": "10", "Shimmering": null, "Sparkling": "30", "Glimmering": null, "Luminous": "50", "Lambent": null, "Scintillating": "100", "quality": "Treasured"}, {"slot": "Head", "name": "Psychic Imprint", "madeBy": "Tailor", "stat": "vs. Mental", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Head", "name": "Savvy Imprint", "madeBy": "Tailor", "stat": "Wis", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Legs", "name": "Brawny Brace", "madeBy": "Armourer", "stat": "Str", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Legs", "name": "Gritty Brace", "madeBy": "Armourer", "stat": "Sta", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Legs", "name": "Septic Brace", "madeBy": "Armourer", "stat": "vs. Disease", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Legs", "name": "Venom Laced Brace", "madeBy": "Armourer", "stat": "vs. Poison", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Neck", "name": "Arcane Clasp", "madeBy": "Jeweller", "stat": "Heat Proc", "Flickering": null, "Shimmering": null, "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Neck", "name": "Consecrated Clasp", "madeBy": "Jeweller", "stat": "Ministration & Ordination", "Flickering": null, "Shimmering": null, "Sparkling": "2", "Glimmering": "4", "Luminous": "6", "Lambent": "8", "Scintillating": "10", "quality": "Legendary"}, {"slot": "Neck", "name": "Judicious Clasp", "madeBy": "Jeweller", "stat": "Increase DPS", "Flickering": null, "Shimmering": "1", "Sparkling": "2", "Glimmering": "4", "Luminous": "6", "Lambent": "8", "Scintillating": "10", "quality": "Legendary"}, {"slot": "Neck", "name": "Occult Clasp", "madeBy": "Weaponsmith", "stat": "Spell Damage", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": "20", "Scintillating": "40", "quality": "Fabled"}, {"slot": "Neck", "name": "Restorative Clasp", "madeBy": "Jeweller", "stat": "Heal Spells", "Flickering": "10", "Shimmering": "15", "Sparkling": "20", "Glimmering": "25", "Luminous": "30", "Lambent": "35", "Scintillating": "40", "quality": "Legendary"}, {"slot": "Neck", "name": "Spry Clasp", "madeBy": "Jeweller", "stat": "Attack Speed", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": "1", "Scintillating": "2", "quality": "Legendary"}, {"slot": "Neck", "name": "Tactical Clasp", "madeBy": "Jeweller", "stat": "Melee Crit", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": null, "Scintillating": "1%", "quality": "Fabled"}, {"slot": "One-Handed Crushing", "name": "Concussive Counterbalance", "madeBy": "Transmuter", "stat": "Crushing", "Flickering": null, "Shimmering": null, "Sparkling": "1", "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Fabled"}, {"slot": "One-Handed Crushing", "name": "Vigilant Counterbalance", "madeBy": "Transmuter", "stat": "Defence", "Flickering": null, "Shimmering": null, "Sparkling": "1", "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Fabled"}, {"slot": "One-Handed Piercing", "name": "Glancing Tsuba", "madeBy": "Transmuter", "stat": "Parry", "Flickering": null, "Shimmering": null, "Sparkling": "1", "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Fabled"}, {"slot": "One-Handed Piercing", "name": "Perforative Tsuba", "madeBy": "Transmuter", "stat": "Piercing", "Flickering": null, "Shimmering": null, "Sparkling": "1", "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Fabled"}, {"slot": "One-Handed Piercing", "name": "Balanced Ayr Stone", "madeBy": "Transmuter", "stat": "Ripost", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": "1%", "Scintillating": "2%", "quality": "Fabled"}, {"slot": "One-Handed Slashing", "name": "Lacerative Ayr Stone", "madeBy": "Transmuter", "stat": "Slashing Damage", "Flickering": null, "Shimmering": null, "Sparkling": "1", "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Fabled"}, {"slot": "One-Handed Weapon", "name": "Phantom Handle", "madeBy": "Transmuter", "stat": "Power Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Legendary"}, {"slot": "One-Handed Weapon", "name": "Vampiric Handle", "madeBy": "Transmuter", "stat": "Health Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Legendary"}, {"slot": "Piercing Weapon", "name": "Honed Crossguard", "madeBy": "Weaponsmith", "stat": "Piercing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Piercing Weapon", "name": "Runic Crossguard", "madeBy": "Weaponsmith", "stat": "Magic Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Piercing Weapon", "name": "Runic Temper", "madeBy": "Transmuter", "stat": "Magic Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Piercing Weapon", "name": "Serpentine Crossguard", "madeBy": "Weaponsmith", "stat": "Poison Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Piercing Weapon", "name": "Serpentine Temper", "madeBy": "Transmuter", "stat": "Poison Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Piercing Weapon", "name": "Viral Crossguard", "madeBy": "Weaponsmith", "stat": "Disease Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Piercing Weapon", "name": "Viral Temper", "madeBy": "Transmuter", "stat": "Disease Proc/Slow", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Primary", "name": "Clemency of the Pontiff", "madeBy": "Armourer", "stat": "Heal Spells", "Flickering": "10", "Shimmering": "15", "Sparkling": "20", "Glimmering": "25", "Luminous": "30", "Lambent": "35", "Scintillating": "40", "quality": "Legendary"}, {"slot": "Primary", "name": "Focus of the Pontiff", "madeBy": "Alchemist", "stat": "Power Proc", "Flickering": null, "Shimmering": null, "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Legendary"}, {"slot": "Primary", "name": "Pontiff's Second Sight", "madeBy": "Provisioner", "stat": "Heal Crit", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": null, "Scintillating": "1%", "quality": "Fabled"}, {"slot": "Primary", "name": "Focus of the Magi", "madeBy": "Sage", "stat": "Power Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Primary", "name": "Finesse of the Pontiff", "madeBy": "Woodworker", "stat": "Decrease Threat", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Primary", "name": "Finesse of the Magi", "madeBy": "Carpenter", "stat": "Decrease Threat", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Bow", "name": "Enchanted Sinew", "madeBy": "Woodworker", "stat": "Slashing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Bow", "name": "Strengthened Sinew", "madeBy": "Woodworker", "stat": "Piercing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Throwing Weapon", "name": "Honing Easyloader", "madeBy": "Tailor", "stat": "Piercing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Throwing Weapon", "name": "Judicious Easyloader", "madeBy": "Tailor", "stat": "DPS", "Flickering": null, "Shimmering": "1", "Sparkling": "2", "Glimmering": "4", "Luminous": "6", "Lambent": "8", "Scintillating": "10", "quality": "Fabled"}, {"slot": "Throwing Weapon", "name": "Phantom Easyloader", "madeBy": "Tailor", "stat": "Power Tap", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Throwing Weapon", "name": "Righteous Easyloader", "madeBy": "Tailor", "stat": "Divine Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Throwing Weapon", "name": "Sharpening Easyloader", "madeBy": "Tailor", "stat": "Slashing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Throwing Weapon", "name": "Weighted Easyloader", "madeBy": "Tailor", "stat": "Crushing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Ring", "name": "Arctic Polish", "madeBy": "Alchemist", "stat": "vs. Cold", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ring", "name": "Epiphanic Polish", "madeBy": "Alchemist", "stat": "Power", "Flickering": null, "Shimmering": "20", "Sparkling": null, "Glimmering": "40", "Luminous": null, "Lambent": "70", "Scintillating": null, "quality": "Treasured"}, {"slot": "Ring", "name": "Fiery Polish", "madeBy": "Alchemist", "stat": "vs. Heat", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ring", "name": "Holy Polish", "madeBy": "Alchemist", "stat": "vs. Divine", "Flickering": "14", "Shimmering": "34", "Sparkling": "54", "Glimmering": "74", "Luminous": "94", "Lambent": "114", "Scintillating": "134", "quality": "Treasured"}, {"slot": "Ring", "name": "Mystic Polish", "madeBy": "Alchemist", "stat": "vs. Magic", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ring", "name": "Psychic Polish", "madeBy": "Alchemist", "stat": "vs. Mental", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ring", "name": "Rugged Polish", "madeBy": "Alchemist", "stat": "Health", "Flickering": null, "Shimmering": "20", "Sparkling": null, "Glimmering": "40", "Luminous": null, "Lambent": "70", "Scintillating": null, "quality": "Treasured"}, {"slot": "Ring", "name": "Septic Polish", "madeBy": "Alchemist", "stat": "vs. Disease", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Ring", "name": "Thriving Polish", "madeBy": "Alchemist", "stat": "Health/Power", "Flickering": null, "Shimmering": "10", "Sparkling": null, "Glimmering": "20", "Luminous": null, "Lambent": "35", "Scintillating": null, "quality": "Fabled"}, {"slot": "Ring", "name": "Venom Laced Polish", "madeBy": "Alchemist", "stat": "vs. Poison", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Shield", "name": "Intercepting Strut", "madeBy": "Woodworker", "stat": "Heal Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Legendary"}, {"slot": "Shield", "name": "Reinforced Strut", "madeBy": "Woodworker", "stat": "Mitigation", "Flickering": "7", "Shimmering": "17", "Sparkling": "27", "Glimmering": "37", "Luminous": "47", "Lambent": "57", "Scintillating": "67", "quality": "Legendary"}, {"slot": "Shield", "name": "Spiked Strut", "madeBy": "Woodworker", "stat": "Damage Shield", "Flickering": "6", "Shimmering": "14", "Sparkling": "23", "Glimmering": "33", "Luminous": "45", "Lambent": "55", "Scintillating": "65", "quality": "Legendary"}, {"slot": "Shoulder", "name": "Brawny Straps", "madeBy": "Tailor", "stat": "Str", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Shoulder", "name": "Gritty Straps", "madeBy": "Tailor", "stat": "Sta", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Shoulder", "name": "Rugged Straps", "madeBy": "Tailor", "stat": "Health", "Flickering": "10", "Shimmering": "25", "Sparkling": "30", "Glimmering": null, "Luminous": "50", "Lambent": null, "Scintillating": "100", "quality": "Treasured"}, {"slot": "Shoulder", "name": "Septic Straps", "madeBy": "Tailor", "stat": "vs. Disease", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Shoulder", "name": "Spiked Straps", "madeBy": "Tailor", "stat": "Damage Shield", "Flickering": "6", "Shimmering": "14", "Sparkling": "22", "Glimmering": "29", "Luminous": "38", "Lambent": "46", "Scintillating": "100", "quality": "Legendary"}, {"slot": "Shoulder", "name": "Venom Laced Straps", "madeBy": "Tailor", "stat": "vs. Poison", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Slashing Weapon", "name": "Glacial Temper", "madeBy": "Transmuter", "stat": "Cold Proc + Slow", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Slashing Weapon", "name": "Glacial Whetstone", "madeBy": "Weaponsmith", "stat": "Cold Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Slashing Weapon", "name": "Molten Temper", "madeBy": "Transmuter", "stat": "Heat Proc (DoT)", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Slashing Weapon", "name": "Molten Whetstone", "madeBy": "Weaponsmith", "stat": "Heat Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Slashing Weapon", "name": "Righteous Temper", "madeBy": "Transmuter", "stat": "Divine Proc + Heal", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Treasured"}, {"slot": "Slashing Weapon", "name": "Righteous Whetstone", "madeBy": "Weaponsmith", "stat": "Divine Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Legendary"}, {"slot": "Slashing Weapon", "name": "Sharpening Whetstone", "madeBy": "Weaponsmith", "stat": "Slashing Damage", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "12", "quality": "Treasured"}, {"slot": "Symbol", "name": "Arcane Ornament", "madeBy": "Carpenter", "stat": "All Arcane Damage", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "5", "Luminous": "10", "Lambent": "20", "Scintillating": "25", "quality": "Fabled"}, {"slot": "Symbol", "name": "Archmage's Ornament", "madeBy": "Carpenter", "stat": "Disruption & Subjugation", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Legendary"}, {"slot": "Symbol", "name": "Elemental Ornament", "madeBy": "Carpenter", "stat": "All Elemental Damage", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "5", "Luminous": "10", "Lambent": "20", "Scintillating": "25", "quality": "Fabled"}, {"slot": "Symbol", "name": "Glacial Ornament", "madeBy": "Carpenter", "stat": "Cold Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Fabled"}, {"slot": "Symbol", "name": "Metaphysical Ornament", "madeBy": "Carpenter", "stat": "In-Combat Power Regen", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "1", "Luminous": null, "Lambent": null, "Scintillating": "2", "quality": "Legendary"}, {"slot": "Symbol", "name": "Molten Ornament", "madeBy": "Carpenter", "stat": "Heat Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Legendary"}, {"slot": "Symbol", "name": "Noxious Ornament", "madeBy": "Carpenter", "stat": "All Noxious Damage", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "5", "Luminous": "10", "Lambent": "20", "Scintillating": "25", "quality": "Fabled"}, {"slot": "Symbol", "name": "Righteous Ornament", "madeBy": "Carpenter", "stat": "Divine Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Legendary"}, {"slot": "Symbol", "name": "Runic Ornament", "madeBy": "Carpenter", "stat": "Magic Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Legendary"}, {"slot": "Symbol", "name": "Serpentine Ornament", "madeBy": "Carpenter", "stat": "Poison Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Legendary"}, {"slot": "Symbol", "name": "Spellbound Ornament", "madeBy": "Carpenter", "stat": "Crit Chance to Damage Spells", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": null, "Scintillating": "1%", "quality": "Fabled"}, {"slot": "Symbol", "name": "Telekinetic Ornament", "madeBy": "Carpenter", "stat": "Mental Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Legendary"}, {"slot": "Symbol", "name": "Viral Ornament", "madeBy": "Carpenter", "stat": "Disease Damage", "Flickering": null, "Shimmering": "5", "Sparkling": "10", "Glimmering": "20", "Luminous": "30", "Lambent": "40", "Scintillating": "45", "quality": "Legendary"}, {"slot": "Two-Handed Crushing", "name": "Phantom Shod", "madeBy": "Transmuter", "stat": "Power Proc", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Legendary"}, {"slot": "Two-Handed Crushing", "name": "Vigilant Shod", "madeBy": "Transmuter", "stat": "Defence", "Flickering": null, "Shimmering": "1", "Sparkling": "2", "Glimmering": "4", "Luminous": "6", "Lambent": "8", "Scintillating": "10", "quality": "Fabled"}, {"slot": "Two-Handed Piercing", "name": "Proficient Shaft", "madeBy": "Transmuter", "stat": "Double Attack", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": "1%", "Lambent": "2%", "Scintillating": "3%", "quality": "Fabled"}, {"slot": "Two-Handed Piercing", "name": "Vigilant Shaft", "madeBy": "Transmuter", "stat": "Defence", "Flickering": null, "Shimmering": "1", "Sparkling": "2", "Glimmering": "4", "Luminous": "6", "Lambent": "8", "Scintillating": "10", "quality": "Fabled"}, {"slot": "Two-Handed Slashing", "name": "Deft Pommel", "madeBy": "Transmuter", "stat": "Chance to AoE Slash", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": "1%", "Lambent": "2%", "Scintillating": "3%", "quality": "Fabled"}, {"slot": "Two-Handed Slashing", "name": "Vampiric Pommel", "madeBy": "Transmuter", "stat": "Divine Damage & Heal Proc", "Flickering": null, "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Legendary"}, {"slot": "Two-Handed Weapon", "name": "Rapid Handgrips", "madeBy": "Transmuter", "stat": "Attack Speed", "Flickering": null, "Shimmering": null, "Sparkling": "2", "Glimmering": "5", "Luminous": "10", "Lambent": "15", "Scintillating": "20", "quality": "Fabled"}, {"slot": "Waist", "name": "Archmage's Buckle", "madeBy": "Armourer", "stat": "Disruption & Subjugation", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": "2", "Luminous": "3", "Lambent": "4", "Scintillating": "5", "quality": "Legendary"}, {"slot": "Waist", "name": "Fast Action Buckle", "madeBy": "Armourer", "stat": "Ranged Crit", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": null, "Scintillating": "1%", "quality": "Fabled"}, {"slot": "Waist", "name": "Spry Buckle", "madeBy": "Armourer", "stat": "Attack Speed", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": "1", "Scintillating": "2", "quality": "Legendary"}, {"slot": "Wrist", "name": "Agile Fastening", "madeBy": "Alchemist", "stat": "Agi", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Wrist", "name": "Balanced Fastening", "madeBy": "Sage", "stat": "Block", "Flickering": null, "Shimmering": null, "Sparkling": null, "Glimmering": null, "Luminous": null, "Lambent": null, "Scintillating": "1%", "quality": "Fabled"}, {"slot": "Wrist", "name": "Brawny Fastening", "madeBy": "Provisioner", "stat": "Str", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Wrist", "name": "Diverting Fastening", "madeBy": "Jeweller", "stat": "Heal on Deflection", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Wrist", "name": "Fiery Fastening", "madeBy": "Provisioner", "stat": "vs. Heat", "Flickering": "10", "Shimmering": "25", "Sparkling": "40", "Glimmering": "55", "Luminous": "70", "Lambent": "85", "Scintillating": "100", "quality": "Treasured"}, {"slot": "Wrist", "name": "Gritty Fastening", "madeBy": "Woodworker", "stat": "Sta", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Wrist", "name": "Hygenic Fastening", "madeBy": "Armourer", "stat": "Health Regen", "Flickering": null, "Shimmering": null, "Sparkling": "1", "Glimmering": null, "Luminous": "2", "Lambent": null, "Scintillating": "3", "quality": "Legendary"}, {"slot": "Wrist", "name": "Intellectual Fastening", "madeBy": "Alchemist", "stat": "Int", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}, {"slot": "Wrist", "name": "Oscillating Fastening", "madeBy": "Jeweller", "stat": "Heal on Parry", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Wrist", "name": "Reactive Fastening", "madeBy": "Jeweller", "stat": "Heal on Ripost", "Flickering": "\u221a", "Shimmering": "\u221a", "Sparkling": "\u221a", "Glimmering": "\u221a", "Luminous": "\u221a", "Lambent": "\u221a", "Scintillating": "\u221a", "quality": "Fabled"}, {"slot": "Wrist", "name": "Reinforced Fastening", "madeBy": "Carpenter", "stat": "Mitigation", "Flickering": "7", "Shimmering": "17", "Sparkling": "27", "Glimmering": "37", "Luminous": "47", "Lambent": "57", "Scintillating": "67", "quality": "Legendary"}, {"slot": "Wrist", "name": "Savvy Fastening", "madeBy": "Carpenter", "stat": "Wis", "Flickering": "1", "Shimmering": "2", "Sparkling": "4", "Glimmering": "6", "Luminous": "8", "Lambent": "10", "Scintillating": "14", "quality": "Treasured"}];
+    const transmutedData = [{"tier": "Flickering", "treasured": {"powder": 1, "fragment": 2}, "legendary": {"powder": 1, "fragment": 1, "infusion": 1}, "fabled": {"powder": 1, "fragment": 1, "infusion": 1, "mana": 1}}, {"tier": "Shimmering", "treasured": {"powder": 1, "fragment": 3}, "legendary": {"powder": 2, "fragment": 2, "infusion": 1}, "fabled": {"powder": 1, "fragment": 1, "infusion": 1, "mana": 1}}, {"tier": "Sparkling", "treasured": {"powder": 1, "fragment": 5}, "legendary": {"powder": 2, "fragment": 3, "infusion": 1}, "fabled": {"powder": 2, "fragment": 2, "infusion": 1, "mana": 1}}, {"tier": "Glimmering", "treasured": {"powder": 1, "fragment": 6}, "legendary": {"powder": 4, "fragment": 3, "infusion": 1}, "fabled": {"powder": 3, "fragment": 3, "infusion": 1, "mana": 1}}, {"tier": "Luminous", "treasured": {"powder": 1, "fragment": 8}, "legendary": {"powder": 5, "fragment": 4, "infusion": 1}, "fabled": {"powder": 2, "fragment": 4, "infusion": 2, "mana": 1}}, {"tier": "Lambent", "treasured": {"powder": 1, "fragment": 9}, "legendary": {"powder": 6, "fragment": 5, "infusion": 1}, "fabled": {"powder": 6, "fragment": 5, "infusion": 2, "mana": 1}}, {"tier": "Scintillating", "treasured": {"powder": 1, "fragment": 9}, "legendary": {"powder": 8, "fragment": 5, "infusion": 1}, "fabled": {"powder": 8, "fragment": 5, "infusion": 2, "mana": 1}}];
+
+    /**
+     * Material data for crafting. Each tier defines the name of the mana,
+     * infusion, powder and fragment materials and the number of each required
+     * to craft an adornment of a given rarity. Counts are derived from the
+     * archived 2007 tables where, for each tier, Treasured adornments use
+     * powder/fragment, Legendary adornments use infusion/powder/fragment and
+     * Fabled adornments use mana/infusion/powder/fragment.
+     */
+    const materialData = [
+      {
+        tier: 'Flickering',
+        materials: {
+          mana: { name: 'Refined', counts: { fabled: 1 } },
+          infusion: { name: 'Earth', counts: { legendary: 1, fabled: 1 } },
+          powder: { name: 'Ulteran', counts: { treasured: 1, legendary: 1, fabled: 1 } },
+          fragment: { name: 'Lapis Lazuli', counts: { treasured: 2, legendary: 1, fabled: 1 } }
+        }
+      },
+      {
+        tier: 'Shimmering',
+        materials: {
+          mana: { name: 'Processed', counts: { fabled: 1 } },
+          infusion: { name: 'Air', counts: { legendary: 1, fabled: 1 } },
+          powder: { name: 'Aether', counts: { treasured: 1, legendary: 2, fabled: 1 } },
+          fragment: { name: 'Coral', counts: { treasured: 3, legendary: 2, fabled: 1 } }
+        }
+      },
+      {
+        tier: 'Sparkling',
+        materials: {
+          mana: { name: 'Clarified', counts: { fabled: 1 } },
+          infusion: { name: 'Fire', counts: { legendary: 1, fabled: 1 } },
+          powder: { name: 'Phantom', counts: { treasured: 1, legendary: 2, fabled: 2 } },
+          fragment: { name: 'Jasper', counts: { treasured: 5, legendary: 3, fabled: 2 } }
+        }
+      },
+      {
+        tier: 'Glimmering',
+        materials: {
+          mana: { name: 'Purified', counts: { fabled: 1 } },
+          infusion: { name: 'Water', counts: { legendary: 1, fabled: 1 } },
+          powder: { name: 'Ethereal', counts: { treasured: 1, legendary: 4, fabled: 3 } },
+          fragment: { name: 'Opal', counts: { treasured: 6, legendary: 3, fabled: 3 } }
+        }
+      },
+      {
+        tier: 'Luminous',
+        materials: {
+          mana: { name: 'Natural', counts: { fabled: 1 } },
+          infusion: { name: 'Nightmare', counts: { legendary: 1, fabled: 2 } },
+          powder: { name: 'Spectral', counts: { treasured: 1, legendary: 5, fabled: 2 } },
+          fragment: { name: 'Ruby', counts: { treasured: 8, legendary: 4, fabled: 4 } }
+        }
+      },
+      {
+        tier: 'Lambent',
+        materials: {
+          mana: { name: 'Coalesced', counts: { fabled: 1 } },
+          infusion: { name: 'Daydream', counts: { legendary: 1, fabled: 2 } },
+          powder: { name: 'Vision', counts: { treasured: 1, legendary: 6, fabled: 6 } },
+          fragment: { name: 'Pearl', counts: { treasured: 9, legendary: 5, fabled: 5 } }
+        }
+      },
+      {
+        tier: 'Scintillating',
+        materials: {
+          mana: { name: 'Hardened', counts: { fabled: 1 } },
+          infusion: { name: 'Illusion', counts: { legendary: 1, fabled: 2 } },
+          powder: { name: 'Illusionary', counts: { treasured: 1, legendary: 8, fabled: 8 } },
+          fragment: { name: 'Lunar', counts: { treasured: 9, legendary: 5, fabled: 5 } }
+        }
+      }
+    ];
+
+    // Track counts of how many times each adornment has been added to the crafting cart.
+    const itemCounts = {};
+    // Aggregate totals for each material by tier. Each entry has mana, infusion, powder and fragment.
+    const materialsCartTotals = materialData.map(() => ({ mana: 0, infusion: 0, powder: 0, fragment: 0 }));
+
+    // Track counts of how many times each adornment tier combination has been added.
+    // Structure: itemCounts[idx][tierName] = count.
+    const itemCountsByTier = [];
+
+    /**
+     * Add an adornment for a specific item and tier to the crafting cart. This
+     * function updates per-item counts, aggregated material totals and the UI.
+     * @param {number} idx Index of the adornment in adornmentsData
+     * @param {string} tierName Name of the tier (e.g., Flickering, Shimmering)
+     */
+    function addItemToCart(idx, tierName) {
+      if (!itemCountsByTier[idx]) itemCountsByTier[idx] = {};
+      itemCountsByTier[idx][tierName] = (itemCountsByTier[idx][tierName] || 0) + 1;
+      // Determine tier index from materialData
+      const tierIndex = materialData.findIndex(t => t.tier === tierName);
+      if (tierIndex === -1) return;
+      const quality = adornmentsData[idx].quality.toLowerCase();
+      // Update material totals using counts for the selected quality
+      const tierMaterials = materialData[tierIndex].materials;
+      Object.keys(tierMaterials).forEach(matKey => {
+        const countsByQuality = tierMaterials[matKey].counts;
+        const amount = countsByQuality[quality] || 0;
+        materialsCartTotals[tierIndex][matKey] += amount;
+      });
+      // Update UI: update cell count badge and summary
+      updateCellCountBadge(idx, tierName);
+      renderCraftingSummary();
+    }
+
+    /**
+     * Remove an adornment for a specific item and tier from the crafting cart.
+     * Decrements counts and aggregated totals if possible.
+     * @param {number} idx Index of the adornment in adornmentsData
+     * @param {string} tierName Name of the tier
+     */
+    function removeItemFromCart(idx, tierName) {
+      if (!itemCountsByTier[idx] || !itemCountsByTier[idx][tierName] || itemCountsByTier[idx][tierName] <= 0) return;
+      itemCountsByTier[idx][tierName] -= 1;
+      const tierIndex = materialData.findIndex(t => t.tier === tierName);
+      if (tierIndex === -1) return;
+      const quality = adornmentsData[idx].quality.toLowerCase();
+      const tierMaterials = materialData[tierIndex].materials;
+      Object.keys(tierMaterials).forEach(matKey => {
+        const countsByQuality = tierMaterials[matKey].counts;
+        const amount = countsByQuality[quality] || 0;
+        materialsCartTotals[tierIndex][matKey] -= amount;
+        if (materialsCartTotals[tierIndex][matKey] < 0) {
+          materialsCartTotals[tierIndex][matKey] = 0;
+        }
+      });
+      updateCellCountBadge(idx, tierName);
+      renderCraftingSummary();
+    }
+
+    /**
+     * Update the visible badge count in the table for a given item and tier. If
+     * the count is zero, the badge is hidden.
+     * @param {number} idx Index of the adornment
+     * @param {string} tierName Name of the tier
+     */
+    function updateCellCountBadge(idx, tierName) {
+      const badge = document.querySelector('span.cell-count[data-idx="' + idx + '"][data-tier="' + tierName + '"]');
+      if (!badge) return;
+      const count = (itemCountsByTier[idx] && itemCountsByTier[idx][tierName]) || 0;
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Event delegation for hover plus/minus buttons
+    document.addEventListener('click', function(event) {
+      const target = event.target;
+      if (target.classList.contains('hover-plus')) {
+        const idx = parseInt(target.dataset.idx, 10);
+        const tierName = target.dataset.tier;
+        addItemToCart(idx, tierName);
+      } else if (target.classList.contains('hover-minus')) {
+        const idx = parseInt(target.dataset.idx, 10);
+        const tierName = target.dataset.tier;
+        removeItemFromCart(idx, tierName);
+      }
+    });
+
+    /**
+     * Add an adornment to the crafting cart. This increments the count for the
+     * given item and updates the aggregated material totals for the selected
+     * tier and the item's quality. If the tier filter is set to "All" no
+     * materials are added; users must select a specific tier to craft at.
+     * @param {number} idx Index of the adornment in adornmentsData
+     */
+    function addToCart(idx) {
+      const tierSelect = document.getElementById('tierFilter');
+      const selectedTier = tierSelect.value;
+      if (selectedTier === 'All') {
+        // Do not allow adding when no tier is selected
+        alert('Please select a specific tier (T1–T7) using the Tier filter before adding items to your crafting list.');
+        return;
+      }
+      // Increment item count
+      itemCounts[idx] = (itemCounts[idx] || 0) + 1;
+      // Determine tier index from materialData
+      const tierIndex = materialData.findIndex(t => t.tier === selectedTier);
+      if (tierIndex === -1) return;
+      const quality = adornmentsData[idx].quality.toLowerCase();
+      // Update material totals using counts for the selected quality
+      const tierMaterials = materialData[tierIndex].materials;
+      Object.keys(tierMaterials).forEach(matKey => {
+        const countsByQuality = tierMaterials[matKey].counts;
+        const amount = countsByQuality[quality] || 0;
+        materialsCartTotals[tierIndex][matKey] += amount;
+      });
+      // Update UI: update count display and summary
+      updateItemCountDisplay(idx);
+      renderCraftingSummary();
+    }
+
+    /**
+     * Remove an adornment from the crafting cart. Decrements the count and
+     * subtracts materials if possible. If count is already zero, nothing
+     * happens. Also respects the currently selected tier.
+     * @param {number} idx Index of the adornment in adornmentsData
+     */
+    function removeFromCart(idx) {
+      const tierSelect = document.getElementById('tierFilter');
+      const selectedTier = tierSelect.value;
+      if (selectedTier === 'All') {
+        alert('Please select a specific tier (T1–T7) using the Tier filter before removing items from your crafting list.');
+        return;
+      }
+      if (!itemCounts[idx] || itemCounts[idx] <= 0) return;
+      itemCounts[idx] -= 1;
+      const tierIndex = materialData.findIndex(t => t.tier === selectedTier);
+      if (tierIndex === -1) return;
+      const quality = adornmentsData[idx].quality.toLowerCase();
+      const tierMaterials = materialData[tierIndex].materials;
+      Object.keys(tierMaterials).forEach(matKey => {
+        const countsByQuality = tierMaterials[matKey].counts;
+        const amount = countsByQuality[quality] || 0;
+        materialsCartTotals[tierIndex][matKey] -= amount;
+        if (materialsCartTotals[tierIndex][matKey] < 0) {
+          materialsCartTotals[tierIndex][matKey] = 0;
+        }
+      });
+      updateItemCountDisplay(idx);
+      renderCraftingSummary();
+    }
+
+    /**
+     * Update the count shown in the table for a given adornment row.
+     * @param {number} idx
+     */
+    function updateItemCountDisplay(idx) {
+      const countSpan = document.querySelector('span.item-count[data-index="' + idx + '"]');
+      if (countSpan) {
+        countSpan.textContent = itemCounts[idx] || 0;
+      }
+    }
+
+    /**
+     * Render the crafting materials summary table. It shows aggregated totals
+     * for each tier and each material (mana, infusion, powder, fragment) with
+     * their names. If no materials have been added, a placeholder message is
+     * displayed instead.
+     */
+    function renderCraftingSummary() {
+      const container = document.getElementById('craftingSummary');
+      // Determine if any materials have been selected
+      const anySelected = materialsCartTotals.some(t => t.mana > 0 || t.infusion > 0 || t.powder > 0 || t.fragment > 0);
+      // Start building the summary table
+      let html = '<table><thead><tr><th>Tier</th><th>Mana</th><th>Infusion</th><th>Powder</th><th>Fragment</th></tr></thead><tbody>';
+      let rowsAdded = 0;
+      if (anySelected) {
+        materialsCartTotals.forEach((totals, tierIndex) => {
+          const tier = materialData[tierIndex];
+          if (totals.mana === 0 && totals.infusion === 0 && totals.powder === 0 && totals.fragment === 0) return;
+          html += '<tr>';
+          html += '<td>T' + (tierIndex + 1) + ' ' + tier.tier + '</td>';
+          ['mana','infusion','powder','fragment'].forEach(matKey => {
+            const matName = tier.materials[matKey].name;
+            const count = totals[matKey] || 0;
+            // Do not display zero counts; leave cell blank for better readability.
+            html += '<td>' + (count > 0 ? (count + ' ' + matName) : '') + '</td>';
+          });
+          html += '</tr>';
+          rowsAdded++;
+        });
+      }
+      // Ensure there are at least two rows so the section height stays consistent.
+      for (let i = 0; rowsAdded + i < 2; i++) {
+        const tierIndex = rowsAdded + i;
+        if (tierIndex >= materialData.length) break;
+        const tier = materialData[tierIndex];
+        html += '<tr><td>T' + (tierIndex + 1) + ' ' + tier.tier + '</td>';
+        ['mana','infusion','powder','fragment'].forEach(() => {
+          // Leave blank cells in placeholder rows rather than showing zero counts.
+          html += '<td></td>';
+        });
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // Event delegation for add/remove buttons
+    document.addEventListener('click', function(event) {
+      const target = event.target;
+      if (target.classList.contains('btn-add')) {
+        const idx = parseInt(target.dataset.index, 10);
+        addToCart(idx);
+      } else if (target.classList.contains('btn-remove')) {
+        const idx = parseInt(target.dataset.index, 10);
+        removeFromCart(idx);
+      }
+    });
+
+    // Populate filter select options
+    function initFilters() {
+      const slotSelect = document.getElementById('slotFilter');
+      const tierSelect = document.getElementById('tierFilter');
+      const crafterSelect = document.getElementById('crafterFilter');
+      const slots = Array.from(new Set(adornmentsData.map(d => d.slot))).sort();
+      slots.unshift('All');
+      slots.forEach(slot => {
+        const option = document.createElement('option');
+        option.value = slot;
+        option.textContent = slot;
+        slotSelect.appendChild(option);
+      });
+      // Populate tier dropdown with numbers (T1 Flickering, etc.) while preserving the underlying value.
+      const allOption = document.createElement('option');
+      allOption.value = 'All';
+      allOption.textContent = 'All';
+      tierSelect.appendChild(allOption);
+      transmutedData.forEach((t, i) => {
+        const option = document.createElement('option');
+        option.value = t.tier;
+        option.textContent = 'T' + (i + 1) + ' ' + t.tier;
+        tierSelect.appendChild(option);
+      });
+
+      // Populate crafter dropdown using unique values from the madeBy field
+      const crafters = Array.from(new Set(adornmentsData.map(d => d.madeBy).filter(Boolean))).sort();
+      crafters.unshift('All');
+      crafters.forEach(crafter => {
+        const option = document.createElement('option');
+        option.value = crafter;
+        option.textContent = crafter;
+        crafterSelect.appendChild(option);
+      });
+    }
+
+    // Render the adornments table
+    function renderAdornmentsTable() {
+      const slotFilter = document.getElementById('slotFilter').value;
+      const tierFilter = document.getElementById('tierFilter').value;
+      // Grab the keyword filter (searches across multiple columns) and crafter filter values.
+      const keywordFilter = document.getElementById('keywordFilter').value.trim().toLowerCase();
+      const crafterFilter = document.getElementById('crafterFilter').value;
+      const tbody = document.getElementById('adornmentTable').querySelector('tbody');
+      tbody.innerHTML = '';
+      adornmentsData.forEach((item, idx) => {
+        // Filter by slot
+        if (slotFilter !== 'All' && item.slot !== slotFilter) return;
+        // Filter by crafter (madeBy). If a specific crafter is selected, only show items crafted by that crafter.
+        if (crafterFilter !== 'All' && item.madeBy !== crafterFilter) return;
+        // Filter by keyword across multiple fields (slot, name, madeBy, stat, and quality). Only apply if a keyword is provided.
+        if (keywordFilter) {
+          const combined = `${item.slot || ''} ${item.name || ''} ${item.madeBy || ''} ${item.stat || ''} ${item.quality || ''}`.toLowerCase();
+          if (!combined.includes(keywordFilter)) return;
+        }
+        // Filter by tier: show row only if there is a non-null value in selected tier or show all
+        if (tierFilter !== 'All' && item[tierFilter] == null) return;
+        const tr = document.createElement('tr');
+        // Basic info columns: slot, name, madeBy, stat
+        [item.slot, item.name, item.madeBy, item.stat].forEach(val => {
+          const td = document.createElement('td');
+          td.textContent = (val === null || val === undefined) ? '' : val;
+          tr.appendChild(td);
+        });
+        // Tier columns: Flickering, Shimmering, Sparkling, Glimmering, Luminous, Lambent, Scintillating
+        const tierNames = ['Flickering','Shimmering','Sparkling','Glimmering','Luminous','Lambent','Scintillating'];
+        tierNames.forEach(tierName => {
+          // Create table cell for each tier and mark it with a class for CSS hover behaviour
+          const td = document.createElement('td');
+          td.className = 'tier-cell';
+          // Data attributes to identify the item and tier when interacting
+          td.dataset.idx = idx;
+          td.dataset.tier = tierName;
+          td.dataset.quality = item.quality.toLowerCase();
+          const value = item[tierName];
+          // Value span
+          const valueSpan = document.createElement('span');
+          valueSpan.className = 'cell-value';
+          valueSpan.textContent = (value === null || value === undefined) ? '' : value;
+          td.appendChild(valueSpan);
+          // Count badge to show how many times this item‑tier has been added
+          const countBadge = document.createElement('span');
+          countBadge.className = 'cell-count';
+          countBadge.dataset.idx = idx;
+          countBadge.dataset.tier = tierName;
+          td.appendChild(countBadge);
+          // Attach click handlers: left click to add, right click to remove
+          // Use mousedown to detect left/right clicks. button 0 = left, 2 = right.
+          td.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+              addItemToCart(idx, tierName);
+            } else if (e.button === 2) {
+              removeItemFromCart(idx, tierName);
+            }
+          });
+          // Prevent the default context menu when right‑clicking
+          td.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+          });
+          tr.appendChild(td);
+        });
+        // Quality column
+        const qualityTd = document.createElement('td');
+        qualityTd.textContent = (item.quality === null || item.quality === undefined) ? '' : item.quality;
+        tr.appendChild(qualityTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Initialize calculator table
+    function initCalculator() {
+      const tbody = document.getElementById('calcTable').querySelector('tbody');
+      transmutedData.forEach((tierData, index) => {
+        const tr = document.createElement('tr');
+        // Tier name cell with number e.g., "T1 Flickering"
+        const tdName = document.createElement('td');
+        tdName.textContent = 'T' + (index + 1) + ' ' + tierData.tier;
+        tr.appendChild(tdName);
+        // For each rarity, add input fields
+        ['treasured','legendary','fabled'].forEach(rarity => {
+          const td = document.createElement('td');
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = 0;
+          input.value = 0;
+          // Store the raw tier name for calculations
+          input.dataset.tier = tierData.tier;
+          input.dataset.rarity = rarity;
+          input.addEventListener('input', calculateResults);
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Calculate yields based on inputs using the average probabilities.
+    function calculateResults() {
+      // Initialize totals and per‑tier breakdowns. Each key holds total count and
+      // a nested object keyed by tier name (e.g., Flickering) containing the expected
+      // number of materials produced for that tier.
+      const totals = { powder: 0, fragment: 0, infusion: 0, mana: 0 };
+      const breakdown = { powder: {}, fragment: {}, infusion: {}, mana: {} };
+      // Probabilities based on three possible outcomes: 75% for a single lower‑rarity item,
+      // 20% for a single higher‑rarity item and 5% for one of each.  The expected
+      // number of lower‑ and higher‑rarity items per transmute is therefore 0.80 and
+      // 0.25 respectively.
+      const LOW_EXPECTED = 0.75 + 0.05;  // 0.80
+      const HIGH_EXPECTED = 0.20 + 0.05; // 0.25
+      // Loop through all inputs to accumulate expected values
+      const inputs = document.querySelectorAll('#calcTable input');
+      inputs.forEach(input => {
+        const rarity = input.dataset.rarity;
+        const tierName = input.dataset.tier;
+        const count = parseFloat(input.value) || 0;
+        if (count <= 0) return;
+        // Find the tier information from transmutedData
+        const tierInfo = transmutedData.find(t => t.tier === tierName);
+        if (!tierInfo) return;
+        // Determine low and high material keys for this rarity
+        let lowKey, highKey;
+        if (rarity === 'treasured') {
+          lowKey = 'fragment';
+          highKey = 'powder';
+        } else if (rarity === 'legendary') {
+          lowKey = 'powder';
+          highKey = 'infusion';
+        } else if (rarity === 'fabled') {
+          lowKey = 'infusion';
+          highKey = 'mana';
+        }
+        // Retrieve counts of materials for this rarity and tier.  For the
+        // purposes of transmuting yields, the actual numbers in the data
+        // tables (e.g., 9 fragments for T7 Treasured) refer to crafting
+        // requirements, not the number of items produced when transmuting a
+        // single item.  A single transmute can only ever yield a maximum of
+        // one low‑rarity component and one high‑rarity component.  Therefore
+        // treat the low and high counts as boolean flags: if the table has
+        // a value for that rarity and tier, then a single transmute can
+        // produce one of that component; otherwise, it produces none.
+        const rarityInfo = tierInfo[rarity] || {};
+        const lowCount = rarityInfo[lowKey] ? 1 : 0;
+        const highCount = rarityInfo[highKey] ? 1 : 0;
+        // Calculate expected yields for low and high materials based on the
+        // 75%/20%/5% distribution.  Each transmute yields an expected 0.80 of
+        // the lower‑rarity item and 0.25 of the higher‑rarity item when
+        // available.
+        const lowYield = lowCount * LOW_EXPECTED * count;
+        const highYield = highCount * HIGH_EXPECTED * count;
+        // Aggregate totals
+        totals[lowKey] += lowYield;
+        totals[highKey] += highYield;
+        // Aggregate breakdown by tier
+        breakdown[lowKey][tierName] = (breakdown[lowKey][tierName] || 0) + lowYield;
+        breakdown[highKey][tierName] = (breakdown[highKey][tierName] || 0) + highYield;
+      });
+      renderResults(totals, breakdown);
+    }
+
+    // Render the results summary, formatting numbers to two decimal places for fractional yields.
+    function renderResults(totals, breakdown) {
+      const resultsDiv = document.getElementById('calcResults');
+      resultsDiv.innerHTML = '';
+      const resources = [
+        { name: 'Fragments', key: 'fragment' },
+        { name: 'Powders', key: 'powder' },
+        { name: 'Infusions', key: 'infusion' },
+        { name: 'Manas', key: 'mana' }
+      ];
+      resources.forEach(res => {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        const h3 = document.createElement('h3');
+        h3.textContent = res.name;
+        card.appendChild(h3);
+        // Total summary
+        const pTotal = document.createElement('p');
+        const totalValue = totals[res.key] || 0;
+        pTotal.textContent = totalValue.toFixed(2);
+        card.appendChild(pTotal);
+        // Breakdown list for each tier and material name
+        const tiersBreakdown = breakdown[res.key] || {};
+        const entries = Object.keys(tiersBreakdown).filter(t => tiersBreakdown[t] > 0);
+        if (entries.length > 0) {
+          const ul = document.createElement('ul');
+          ul.style.listStyle = 'none';
+          ul.style.margin = '4px 0 0 0';
+          ul.style.padding = '0';
+          // Sort entries by tier number (ascending)
+          entries.sort((a, b) => {
+            const ia = transmutedData.findIndex(t => t.tier === a);
+            const ib = transmutedData.findIndex(t => t.tier === b);
+            return ia - ib;
+          });
+          entries.forEach(tierName => {
+            const tierIndex = transmutedData.findIndex(t => t.tier === tierName);
+            const count = tiersBreakdown[tierName] || 0;
+            const materialName = materialData[tierIndex].materials[res.key].name;
+            const li = document.createElement('li');
+            li.textContent = count.toFixed(2) + ' ' + materialName + ' (T' + (tierIndex + 1) + ')';
+            ul.appendChild(li);
+          });
+          card.appendChild(ul);
+        }
+        resultsDiv.appendChild(card);
+      });
+    }
+
+    // Event listeners
+    window.addEventListener('DOMContentLoaded', () => {
+      initFilters();
+      initCalculator();
+      renderAdornmentsTable();
+      calculateResults();
+      // Re-render table on filter change
+      document.getElementById('slotFilter').addEventListener('change', renderAdornmentsTable);
+      document.getElementById('tierFilter').addEventListener('change', renderAdornmentsTable);
+      // When filters change, re-render the table. Use keyword and crafter filters instead of stat filter.
+      document.getElementById('keywordFilter').addEventListener('input', renderAdornmentsTable);
+      document.getElementById('crafterFilter').addEventListener('change', renderAdornmentsTable);
+      // Initialize crafting summary with a placeholder message
+      renderCraftingSummary();
+
+      // Attach export button listener to export crafting list and materials
+      const exportBtn = document.getElementById('exportButton');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', copyCraftingListToClipboard);
+      }
+
+      // Add click handlers for info icons to trigger modal tooltips
+      document.querySelectorAll('.info-icon').forEach(icon => {
+        icon.addEventListener('click', () => {
+          const message = icon.getAttribute('data-tooltip') || '';
+          openTooltip(message);
+        });
+      });
+    });
+
+    /**
+     * Show the modal tooltip overlay with the provided text.  The overlay will
+     * display the message inside a centred box with a close button.
+     * @param {string} text The tooltip message to display
+     */
+    function openTooltip(text) {
+      const overlay = document.getElementById('tooltipOverlay');
+      const contentDiv = document.getElementById('tooltipContent');
+      contentDiv.textContent = text;
+      // Assign click handler on overlay each time tooltip is opened.  This
+      // ensures the overlay element exists in the DOM before attaching events.
+      // Assign click handler to close tooltip when clicking outside the box or on
+      // the explicit close button.  Attaching the listener on the overlay
+      // ensures that clicks anywhere on the dark background will close the
+      // dialog.  We also bind an explicit handler on the close button for
+      // reliability.
+      overlay.onclick = function(e) {
+        // If the user clicks either the overlay background or the close button,
+        // close the tooltip.  Checking the id and class ensures the message
+        // itself does not trigger closure when clicked.
+        if (e.target.id === 'tooltipOverlay' || e.target.classList.contains('close-btn')) {
+          closeTooltip();
+        }
+      };
+      // Explicitly attach click handler to the close button so that it always
+      // closes the tooltip even if event propagation is stopped elsewhere.
+      const closeBtn = overlay.querySelector('.close-btn');
+      if (closeBtn) {
+        closeBtn.onclick = function(e) {
+          e.stopPropagation();
+          closeTooltip();
+        };
+      }
+      overlay.style.display = 'block';
+    }
+
+    /**
+     * Hide the tooltip overlay
+     */
+    function closeTooltip() {
+      const overlay = document.getElementById('tooltipOverlay');
+      overlay.style.display = 'none';
+    }
+
+    /**
+     * Copy the current crafting list and material totals to the clipboard as
+     * human‑readable text.  Each line in the first section lists the
+     * quantity, tier and name of each selected adornment.  The second
+     * section lists the aggregated material counts with descriptive
+     * names (e.g., "Lunar Fragment", "Illusionary Powder", "Infusion of Illusion").
+     */
+    function copyCraftingListToClipboard() {
+      const lines = [];
+      // Section 1: Selected adornments
+      let any = false;
+      adornmentsData.forEach((item, idx) => {
+        const counts = itemCountsByTier[idx];
+        if (!counts) return;
+        Object.keys(counts).forEach(tierName => {
+          const count = counts[tierName];
+          if (count > 0) {
+            lines.push(`${count} ${tierName} ${item.name}`);
+            any = true;
+          }
+        });
+      });
+      if (!any) {
+        lines.push('No adornments selected');
+      }
+      // Blank line between sections
+      lines.push('');
+      lines.push('Materials:');
+      // Build materials list: aggregated totals per tier and type
+      const materialLines = [];
+      materialsCartTotals.forEach((totals, tierIndex) => {
+        const tierInfo = materialData[tierIndex];
+        ['mana','infusion','powder','fragment'].forEach(matKey => {
+          const count = totals[matKey] || 0;
+          if (count > 0) {
+            const baseName = tierInfo.materials[matKey].name;
+            let fullName;
+            if (matKey === 'infusion') {
+              fullName = `Infusion of ${baseName}`;
+            } else if (matKey === 'powder') {
+              fullName = `${baseName} Powder`;
+            } else if (matKey === 'fragment') {
+              fullName = `${baseName} Fragment`;
+            } else if (matKey === 'mana') {
+              fullName = `${baseName} Mana`;
+            } else {
+              fullName = baseName;
+            }
+            materialLines.push(`${count} ${fullName} (T${tierIndex + 1})`);
+          }
+        });
+      });
+      if (materialLines.length === 0) {
+        lines.push('No materials required');
+      } else {
+        lines.push(...materialLines);
+      }
+      const text = lines.join('\n');
+      // Copy to clipboard
+      const copyHelper = (str) => {
+        const textarea = document.createElement('textarea');
+        textarea.value = str;
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          alert('Exported crafting list copied to clipboard');
+        } catch (err) {
+          alert('Unable to copy to clipboard');
+        }
+        document.body.removeChild(textarea);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Exported crafting list copied to clipboard');
+        }).catch(() => {
+          copyHelper(text);
+        });
+      } else {
+        copyHelper(text);
+      }
+    }
+  </script>
+
+  <!-- Modal tooltip overlay for info icons.  This div is hidden by default and
+       will be shown when an info icon is clicked.  Clicking on the X or
+       outside the box will close the tooltip. -->
+  <div id="tooltipOverlay" class="tooltip-overlay">
+    <div class="tooltip-box">
+      <span class="close-btn">×</span>
+      <div id="tooltipContent" class="tooltip-text"></div>
+    </div>
+  </div>
+</body>
+</html>
