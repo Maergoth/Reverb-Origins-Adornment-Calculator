@@ -57,15 +57,18 @@
       margin-bottom: 10px;
     }
 
-    /* Subheader styling beneath the main title */
+    /* Subheader styling beneath the main title.  Use black text and underline
+       to improve contrast for the informational links. */
     .subheader {
       margin: 5px 0 0 0;
-      /* Increase the subheader font size and weight to make the Discord
-         invitation more pronounced.  Retain the underline to aid
-         readability and emphasise the link. */
       font-size: 20px;
       font-weight: bold;
-      color: var(--accent-color);
+      color: #000;
+      text-decoration: underline;
+    }
+    /* Ensure links inside the subheader inherit the black colour and remain underlined. */
+    .subheader a {
+      color: #000;
       text-decoration: underline;
     }
 
@@ -339,7 +342,23 @@
     }
     #adornmentTable th:nth-child(12),
     #adornmentTable td:nth-child(12) {
-      min-width: 50px;
+      /* Rarity/Quality column: allow more horizontal space so the text does not wrap awkwardly. */
+      min-width: 120px;
+      max-width: 180px;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* Limit the height of the adornment table to roughly 10 rows and enable a vertical scrollbar. */
+    #adornmentTableContainer {
+      max-height: 400px;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    /* Pointer cursor for tier cells to indicate they are interactive. */
+    .tier-cell {
+      cursor: pointer;
     }
 
     /* Export button styling.  Appears within the Crafting Materials Summary header. */
@@ -357,6 +376,10 @@
     .export-btn:hover {
       opacity: 0.9;
     }
+
+    /* The crafting summary no longer collapses.  Remove collapsed
+       behaviour for this section.  The header is not clickable and the
+       content always remains visible. */
 
     /* Full-screen overlay for tooltips.  When visible, this layer covers the
        entire screen and centres a square tooltip box.  The overlay is hidden
@@ -398,56 +421,67 @@
       font-size: 18px;
       color: var(--accent-color);
     }
+
+    /* Toggle arrow icon used for collapsible sections.  The arrow rotates to
+       indicate whether the section is expanded or collapsed. */
+    .toggle-icon {
+      display: inline-block;
+      margin-right: 6px;
+      transition: transform 0.2s ease;
+    }
+    #calculator-section.collapsed .toggle-icon {
+      transform: rotate(0deg);
+    }
+    #calculator-section:not(.collapsed) .toggle-icon {
+      transform: rotate(90deg);
+    }
+    /* When the transmuting yield calculator is collapsed, hide its content. */
+    #calculator-section.collapsed .calculator-content {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Reverb Origins Adornment Calculator</h1>
-    <!-- Make the Discord invitation link stand out by giving it a bold weight
-         and an underline.  Inline styles are used here to override default
-         anchor styles within the subheader. -->
-    <p class="subheader">Origins discussion at <a href="https://discord.gg/reverb" style="color: var(--accent-color); text-decoration: underline; font-weight: bold;">discord.gg/reverb</a></p>
+    <!-- Discord invitation line uses a black link for improved contrast. -->
+    <p class="subheader">Origins discussion at <a href="https://discord.gg/reverb">discord.gg/reverb</a></p>
+    <!-- Additional link to the EQ2 Classic transmuting page for reference -->
+    <p class="subheader"><a href="https://eq2classic.fandom.com/wiki/Transmuting" target="_blank">Transmuting guide on EQ2Classic</a></p>
   </header>
   <div class="container">
-    <!-- Transmuting yield calculator comes first so users can estimate materials before browsing the adornments table. -->
-    <section id="calculator-section" class="calculator">
-      <h2>Transmuting Yield Calculator
-        <span class="info-icon" data-tooltip="Enter how many Treasured, Legendary and Fabled items you plan to transmute for each tier. Each transmute can produce either a single lower‑rarity component (75%), a single higher‑rarity component (20%) or one of each (5%). This tool multiplies your inputs by the resulting average yields – roughly 0.80 of the lower‑rarity material and 0.25 of the higher‑rarity material per transmute – and does not simulate randomness or perform any material conversions.">i</span>
+    <!-- Transmuting yield calculator comes first so users can estimate materials before browsing the adornments table.  This section starts collapsed and can be expanded by clicking its header. -->
+    <section id="calculator-section" class="calculator collapsed" style="margin-top: 20px;">
+      <h2 id="calc-header" class="section-header"><span class="toggle-icon">▶</span> Transmuting Yield Calculator
+        <span class="info-icon" data-tooltip="Enter how many Treasured, Legendary and Fabled items you plan to transmute for each tier. Each transmute can produce either a single lower‑rarity component (75%), a single higher‑rarity component (20%) or one of each (5%). This tool multiplies your inputs by the resulting average yields (0.80 low and 0.25 high) and does not perform any material conversions. Click the header to expand or collapse the calculator.">i</span>
       </h2>
-      <div class="calc-grid">
-        <table class="calc-table" id="calcTable">
-          <thead>
-            <tr>
-              <th>Tier</th>
-              <th>Treasured<br>Items</th>
-              <th>Legendary<br>Items</th>
-              <th>Fabled<br>Items</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-      </div>
-      <div class="results" id="calcResults">
-        <!-- Dynamic result cards will appear here -->
+      <div class="calculator-content">
+        <div class="calc-grid">
+          <table class="calc-table" id="calcTable">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Treasured<br>Items</th>
+                <th>Legendary<br>Items</th>
+                <th>Fabled<br>Items</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+        <div class="results" id="calcResults">
+          <!-- Dynamic result cards will appear here -->
+        </div>
       </div>
     </section>
 
-    <!-- Summary of crafting materials required for selected adornments. This section is populated dynamically by JavaScript. -->
-    <section id="crafting-summary-section" class="calculator" style="margin-top: 20px;">
-      <h2>Crafting Materials Summary
-        <span class="info-icon" data-tooltip="Left‑click a value in any tier column to add one of that adornment to your crafting list. Right‑click to remove one. This summary shows the total quantities of each material required for all selected adornments. When no items are selected, you’ll still see a couple of placeholder rows to prevent the table from jumping as you make selections.">i</span>
-      </h2>
-      <button id="exportButton" class="export-btn">Export</button>
-      <div id="craftingSummary">
-        <!-- Dynamic material summary will be inserted here -->
-      </div>
-    </section>
+    <!-- Placeholder removed here; the crafting summary definition has been moved to the bottom of the page. -->
     
     <!-- Adornments lookup comes after the calculator. -->
     <section id="adornments-section">
       <h2>Adornments Lookup
-        <span class="info-icon" data-tooltip="Left click to add to the build list, right click to remove. Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
+        <span class="info-icon" data-tooltip="Left click to add an adornment to the Crafting List. Right click to remove. Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
       </h2>
       <div class="filters">
         <div>
@@ -467,7 +501,7 @@
           <input type="text" id="keywordFilter" placeholder="Type to search">
         </div>
       </div>
-      <div style="overflow-x:auto;">
+      <div id="adornmentTableContainer">
         <table id="adornmentTable">
           <thead>
             <tr>
@@ -488,6 +522,21 @@
           <tbody>
           </tbody>
         </table>
+      </div>
+    </section>
+    
+    <!-- Crafting summary of selected adornments and materials. Placed below the adornments lookup. -->
+    <section id="crafting-summary-section" class="calculator" style="margin-top: 20px;">
+      <h2 id="summary-header">Crafting Summary
+        <span class="info-icon" data-tooltip="Left‑click a value in any tier column to add one of that adornment to your crafting list. Right‑click to remove one. This summary lists the selected adornments and the total quantities of each material required. Use the Export button inside to copy a summary to your clipboard.">i</span>
+      </h2>
+      <div class="summary-content">
+        <!-- Running list of selected adornments will appear here -->
+        <div id="selectedList"></div>
+        <!-- Export button for copying the crafting list to the clipboard -->
+        <button id="exportButton" class="export-btn">Export</button>
+        <!-- Table of aggregated material counts by tier -->
+        <div id="craftingSummary"></div>
       </div>
     </section>
     
@@ -782,6 +831,49 @@
       }
       html += '</tbody></table>';
       container.innerHTML = html;
+
+      // Also update the running list of selected adornments with slot and stat info.
+      updateSelectedList();
+    }
+
+    /**
+     * Update the list of selected adornments displayed at the top of the
+     * crafting summary.  Each entry shows the quantity, tier, item name,
+     * slot, stat value for that tier and the stat description.  If no
+     * adornments are selected, a placeholder message is shown instead.
+     */
+    function updateSelectedList() {
+      const listDiv = document.getElementById('selectedList');
+      if (!listDiv) return;
+      const lines = [];
+      adornmentsData.forEach((item, idx) => {
+        const counts = itemCountsByTier[idx];
+        if (!counts) return;
+        Object.keys(counts).forEach(tierName => {
+          const count = counts[tierName];
+          if (count > 0) {
+            // Retrieve the stat value for this item at the given tier.  Some
+            // cells contain numbers or percentages; if absent, the value may
+            // be null or an empty string.
+            const value = (item[tierName] !== null && item[tierName] !== undefined) ? item[tierName] : '';
+            // Format the stat description by replacing "vs." with "Versus" for readability.
+            const statFormatted = item.stat ? item.stat.replace(/vs\./gi, 'Versus') : '';
+            // Build the detail string: slot, value and stat.  Skip missing pieces gracefully.
+            let detail = '';
+            if (value !== '') {
+              detail = `${item.slot}, ${value} ${statFormatted}`.trim();
+            } else {
+              detail = `${item.slot}${statFormatted ? ', ' + statFormatted : ''}`.trim();
+            }
+            lines.push(`${count} ${tierName} ${item.name} (${detail})`);
+          }
+        });
+      });
+      if (lines.length === 0) {
+        listDiv.textContent = 'No adornments selected';
+      } else {
+        listDiv.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+      }
     }
 
     // Event delegation for add/remove buttons
@@ -1065,13 +1157,31 @@
         exportBtn.addEventListener('click', copyCraftingListToClipboard);
       }
 
-      // Add click handlers for info icons to trigger modal tooltips
+      // Add click handlers for info icons to trigger modal tooltips.  Stop
+      // propagation so the click does not trigger collapsible headers.
       document.querySelectorAll('.info-icon').forEach(icon => {
-        icon.addEventListener('click', () => {
+        icon.addEventListener('click', (e) => {
+          e.stopPropagation();
           const message = icon.getAttribute('data-tooltip') || '';
           openTooltip(message);
         });
       });
+
+      // The crafting summary no longer collapses, so we do not attach
+      // click handlers on its header for toggling visibility.
+
+      // Toggle the transmuting yield calculator collapsed state when its header is clicked.
+      const calcHeaderEl = document.getElementById('calc-header');
+      const calcSectionEl = document.getElementById('calculator-section');
+      if (calcHeaderEl && calcSectionEl) {
+        calcHeaderEl.addEventListener('click', (e) => {
+          // Do not toggle when clicking the info icon
+          if (e.target.classList.contains('info-icon')) {
+            return;
+          }
+          calcSectionEl.classList.toggle('collapsed');
+        });
+      }
     });
 
     /**
@@ -1135,7 +1245,16 @@
         Object.keys(counts).forEach(tierName => {
           const count = counts[tierName];
           if (count > 0) {
-            lines.push(`${count} ${tierName} ${item.name}`);
+            // Retrieve the stat value for this item at the given tier.
+            const value = (item[tierName] !== null && item[tierName] !== undefined) ? item[tierName] : '';
+            const statFormatted = item.stat ? item.stat.replace(/vs\./gi, 'Versus') : '';
+            let detail;
+            if (value !== '') {
+              detail = `${item.slot}, ${value} ${statFormatted}`.trim();
+            } else {
+              detail = `${item.slot}${statFormatted ? ', ' + statFormatted : ''}`.trim();
+            }
+            lines.push(`${count} ${tierName} ${item.name} (${detail})`);
             any = true;
           }
         });
