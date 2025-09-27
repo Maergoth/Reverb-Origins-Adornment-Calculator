@@ -291,6 +291,8 @@
       padding: 0 4px;
       font-size: 11px;
       cursor: pointer;
+      /* Prevent text selection when double‑clicking on interactive tier cells. */
+      user-select: none;
       margin-left: 2px;
     }
     .hover-controls button.hover-plus {
@@ -359,6 +361,16 @@
     /* Pointer cursor for tier cells to indicate they are interactive. */
     .tier-cell {
       cursor: pointer;
+      /* Prevent text selection when double‑clicking on interactive tier cells */
+      user-select: none;
+    }
+
+    /* Prevent text selection inside tier cells, including nested spans */
+    .tier-cell *, .tier-cell {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
 
     /* Export button styling.  Appears within the Crafting Materials Summary header. */
@@ -375,6 +387,21 @@
     }
     .export-btn:hover {
       opacity: 0.9;
+    }
+
+    /* Styling for the minus buttons inside the crafting summary list.  These allow users to
+       remove items from the crafting list. */
+    .remove-item {
+      color: #dc3545;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 6px;
+      display: inline-block;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .remove-item:hover {
+      opacity: 0.8;
     }
 
     /* The crafting summary no longer collapses.  Remove collapsed
@@ -445,7 +472,8 @@
   <header>
     <h1>Reverb Origins Adornment Calculator</h1>
     <!-- Discord invitation line uses a black link for improved contrast. -->
-    <p class="subheader">Origins discussion at <a href="https://discord.gg/reverb">discord.gg/reverb</a></p>
+    <!-- Make the entire origins line a single hyperlink so clicking anywhere opens the Discord invite -->
+    <p class="subheader"><a href="https://discord.gg/reverb">Origins discussion at discord.gg/reverb</a></p>
     <!-- Additional link to the EQ2 Classic transmuting page for reference -->
     <p class="subheader"><a href="https://eq2classic.fandom.com/wiki/Transmuting" target="_blank">Transmuting guide on EQ2Classic</a></p>
   </header>
@@ -481,7 +509,7 @@
     <!-- Adornments lookup comes after the calculator. -->
     <section id="adornments-section">
       <h2>Adornments Lookup
-        <span class="info-icon" data-tooltip="Left click to add an adornment to the Crafting List. Right click to remove. Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
+        <span class="info-icon" data-tooltip="Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
       </h2>
       <div class="filters">
         <div>
@@ -527,7 +555,7 @@
     
     <!-- Crafting summary of selected adornments and materials. Placed below the adornments lookup. -->
     <section id="crafting-summary-section" class="calculator" style="margin-top: 20px;">
-      <h2 id="summary-header">Crafting List
+      <h2 id="summary-header">Crafting Summary
         <span class="info-icon" data-tooltip="Left‑click a value in any tier column to add one of that adornment to your crafting list. Right‑click to remove one. This summary lists the selected adornments and the total quantities of each material required. Use the Export button inside to copy a summary to your clipboard.">i</span>
       </h2>
       <div class="summary-content">
@@ -845,7 +873,8 @@
     function updateSelectedList() {
       const listDiv = document.getElementById('selectedList');
       if (!listDiv) return;
-      const lines = [];
+      const entriesHtml = [];
+      // Build a list of selected adornments with minus buttons for removal.
       adornmentsData.forEach((item, idx) => {
         const counts = itemCountsByTier[idx];
         if (!counts) return;
@@ -865,14 +894,49 @@
             } else {
               detail = `${item.slot}${statFormatted ? ', ' + statFormatted : ''}`.trim();
             }
-            lines.push(`${count} ${tierName} ${item.name} (${detail})`);
+            const lineText = `${count} ${tierName} ${item.name} (${detail})`;
+            // Prepend a clickable removal symbol to allow removal from the list.  Use a span with
+            // data attributes and an inline onclick to call removeItemFromCart() directly.  The
+            // multiplication sign (×) is more visible than a hyphen.  Replace single quotes in
+            // tier names to avoid breaking the inline handler.
+            // Create a removal icon using a multiplication sign (×).  Do not
+            // attach inline click handlers here; instead rely on event
+            // delegation on the document to intercept clicks on elements
+            // with the remove-item class.  The dataset attributes allow us
+            // to identify which item and tier to remove when the icon is
+            // clicked.
+            // Use window.removeItemFromCart in inline handler so the function is
+            // resolved on the global object.  Escaping single quotes in
+            // tier names prevents syntax errors if the tier contains an apostrophe.
+            // The removal icon uses the class 'remove-item' and stores the item index and tier
+            // in data attributes.  A global click handler listens for clicks on
+            // elements with this class and calls removeItemFromCart() once.
+            const removeBtn = `<span class="remove-item" data-idx="${idx}" data-tier="${tierName}">&times;</span>`;
+            entriesHtml.push(`<div>${removeBtn}${lineText}</div>`);
           }
         });
       });
-      if (lines.length === 0) {
+      if (entriesHtml.length === 0) {
         listDiv.textContent = 'No adornments selected';
       } else {
-        listDiv.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+        listDiv.innerHTML = entriesHtml.join('');
+
+        // Attach click handlers to each remove-item element.  Using direct
+        // binding avoids multiple event handlers firing and ensures that
+        // clicking the removal icon only subtracts one item.  Stop
+        // propagation so that clicks on the icon do not trigger other
+        // handlers.
+        listDiv.querySelectorAll('.remove-item').forEach(el => {
+          el.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            const idxStr = el.getAttribute('data-idx');
+            const tierStr = el.getAttribute('data-tier');
+            if (idxStr !== null && tierStr !== null) {
+              const idxNum = parseInt(idxStr, 10);
+              removeItemFromCart(idxNum, tierStr);
+            }
+          });
+        });
       }
     }
 
@@ -955,38 +1019,48 @@
         // Tier columns: Flickering, Shimmering, Sparkling, Glimmering, Luminous, Lambent, Scintillating
         const tierNames = ['Flickering','Shimmering','Sparkling','Glimmering','Luminous','Lambent','Scintillating'];
         tierNames.forEach(tierName => {
-          // Create table cell for each tier and mark it with a class for CSS hover behaviour
-          const td = document.createElement('td');
-          td.className = 'tier-cell';
-          // Data attributes to identify the item and tier when interacting
-          td.dataset.idx = idx;
-          td.dataset.tier = tierName;
-          td.dataset.quality = item.quality.toLowerCase();
+          // Determine the value in this tier. If null/undefined, the cell is considered empty and non‑interactive.
           const value = item[tierName];
-          // Value span
-          const valueSpan = document.createElement('span');
-          valueSpan.className = 'cell-value';
-          valueSpan.textContent = (value === null || value === undefined) ? '' : value;
-          td.appendChild(valueSpan);
-          // Count badge to show how many times this item‑tier has been added
-          const countBadge = document.createElement('span');
-          countBadge.className = 'cell-count';
-          countBadge.dataset.idx = idx;
-          countBadge.dataset.tier = tierName;
-          td.appendChild(countBadge);
-          // Attach click handlers: left click to add, right click to remove
-          // Use mousedown to detect left/right clicks. button 0 = left, 2 = right.
-          td.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {
-              addItemToCart(idx, tierName);
-            } else if (e.button === 2) {
-              removeItemFromCart(idx, tierName);
-            }
-          });
-          // Prevent the default context menu when right‑clicking
-          td.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-          });
+          const td = document.createElement('td');
+          // Only make the cell interactive if there is a value present (including numbers, strings or symbols). Empty cells are skipped.
+          if (value !== null && value !== undefined) {
+            td.className = 'tier-cell';
+            // Data attributes to identify the item and tier when interacting
+            td.dataset.idx = idx;
+            td.dataset.tier = tierName;
+            td.dataset.quality = item.quality.toLowerCase();
+            // Value span
+            const valueSpan = document.createElement('span');
+            valueSpan.className = 'cell-value';
+            valueSpan.textContent = value;
+            td.appendChild(valueSpan);
+            // Count badge to show how many times this item‑tier has been added
+            const countBadge = document.createElement('span');
+            countBadge.className = 'cell-count';
+            countBadge.dataset.idx = idx;
+            countBadge.dataset.tier = tierName;
+            td.appendChild(countBadge);
+            // Attach click handlers: left click to add, right click to remove
+            // Use mousedown to detect left/right clicks. button 0 = left, 2 = right.
+            td.addEventListener('mousedown', (e) => {
+              // Prevent highlighting text or dragging when double-clicking
+              e.preventDefault();
+              if (e.button === 0) {
+                addItemToCart(idx, tierName);
+              } else if (e.button === 2) {
+                removeItemFromCart(idx, tierName);
+              }
+            });
+            // Prevent the default context menu when right‑clicking
+            td.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+            });
+          } else {
+            // Empty cell: simply display an empty string and do not make it interactive
+            td.textContent = '';
+            // Use default cursor so it doesn't appear clickable
+            td.style.cursor = 'default';
+          }
           tr.appendChild(td);
         });
         // Quality column
@@ -1157,6 +1231,29 @@
         exportBtn.addEventListener('click', copyCraftingListToClipboard);
       }
 
+      // Add event delegation on the selectedList container to handle removal
+      // of adornments from the crafting list via the minus buttons.  When
+      // clicking the minus symbol, remove one instance of that item and tier.
+      // Note: removal of items is handled via a single global event listener below.
+      // We no longer attach a click listener to selectedListDiv here to avoid
+      // multiple event handlers firing for the same click.
+
+      // Also handle removal of items from anywhere in the document.  This
+      // ensures that dynamically created minus buttons inside the crafting
+      // summary work even if event delegation fails on the selectedList
+      // container.  When a minus icon is clicked, stop propagation and
+      // call removeItemFromCart() with the encoded index and tier.
+      document.addEventListener('click', function(event) {
+        const t = event.target;
+        // If the target is a removal icon, let its own handler manage it
+        if (t && t.classList && t.classList.contains('remove-item')) {
+          // Do nothing here; the specific remove-item handler will
+          // process the click and call removeItemFromCart.  This prevents
+          // multiple removal events from firing.
+          return;
+        }
+      });
+
       // Add click handlers for info icons to trigger modal tooltips.  Stop
       // propagation so the click does not trigger collapsible headers.
       document.querySelectorAll('.info-icon').forEach(icon => {
@@ -1319,6 +1416,14 @@
         copyHelper(text);
       }
     }
+
+    // Expose addItemToCart and removeItemFromCart to the global window object so
+    // inline event handlers can call them.  Without this, functions declared
+    // in this script may not be accessible via window.removeItemFromCart in
+    // certain environments (e.g., strict mode).  Assigning them ensures
+    // compatibility.
+    window.addItemToCart = addItemToCart;
+    window.removeItemFromCart = removeItemFromCart;
   </script>
 
   <!-- Modal tooltip overlay for info icons.  This div is hidden by default and
