@@ -916,7 +916,7 @@
         let html = '';
         // Sort crafters alphabetically for consistent ordering
         crafterNames.sort().forEach(crafter => {
-          html += `<div class="crafter-heading"># ${crafter}</div>`;
+          html += `<div class="crafter-heading">### ${crafter}</div>`;
           grouped[crafter].forEach(entry => {
             const removeBtn = `<span class="remove-item" data-idx="${entry.idx}" data-tier="${entry.tierName}">&times;</span>`;
             html += `<div>${removeBtn}${entry.text}</div>`;
@@ -1360,7 +1360,7 @@
         lines.push('No adornments selected');
       } else {
         crafterNames.forEach(crafter => {
-          lines.push(`# ${crafter}`);
+          lines.push(`### ${crafter}`);
           grouped[crafter].forEach(line => {
             lines.push(line);
           });
