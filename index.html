@@ -404,6 +404,14 @@
       opacity: 0.8;
     }
 
+    /* Heading used for grouping selected adornments by crafter in the summary */
+    .crafter-heading {
+      font-weight: bold;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      color: var(--text-color);
+    }
+
     /* The crafting summary no longer collapses.  Remove collapsed
        behaviour for this section.  The header is not clickable and the
        content always remains visible. */
@@ -509,7 +517,7 @@
     <!-- Adornments lookup comes after the calculator. -->
     <section id="adornments-section">
       <h2>Adornments Lookup
-        <span class="info-icon" data-tooltip="Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
+        <span class="info-icon" data-tooltip="Left click to add adornments to your list. Right click to remove. Use the dropdowns to filter by slot, tier and crafter. Use the keyword box to search across any column. The slot and tier filters take priority – search results only apply within the selected filters.">i</span>
       </h2>
       <div class="filters">
         <div>
@@ -873,61 +881,51 @@
     function updateSelectedList() {
       const listDiv = document.getElementById('selectedList');
       if (!listDiv) return;
-      const entriesHtml = [];
-      // Build a list of selected adornments with minus buttons for removal.
+      /*
+       * Group selected adornments by crafter.  Each crafter gets a header and
+       * a list of their selected items.  An individual entry displays the
+       * quantity, tier and name, followed by the slot and stat details in
+       * parentheses.  A remove icon allows a single instance to be removed.
+       */
+      const grouped = {};
       adornmentsData.forEach((item, idx) => {
         const counts = itemCountsByTier[idx];
         if (!counts) return;
+        const crafter = item.madeBy || 'Unknown';
         Object.keys(counts).forEach(tierName => {
           const count = counts[tierName];
           if (count > 0) {
-            // Retrieve the stat value for this item at the given tier.  Some
-            // cells contain numbers or percentages; if absent, the value may
-            // be null or an empty string.
             const value = (item[tierName] !== null && item[tierName] !== undefined) ? item[tierName] : '';
-            // Format the stat description by replacing "vs." with "Versus" for readability.
             const statFormatted = item.stat ? item.stat.replace(/vs\./gi, 'Versus') : '';
-            // Build the detail string: slot, value and stat.  Skip missing pieces gracefully.
-            let detail = '';
+            let detail;
             if (value !== '') {
               detail = `${item.slot}, ${value} ${statFormatted}`.trim();
             } else {
               detail = `${item.slot}${statFormatted ? ', ' + statFormatted : ''}`.trim();
             }
-            const lineText = `${count} ${tierName} ${item.name} (${detail})`;
-            // Prepend a clickable removal symbol to allow removal from the list.  Use a span with
-            // data attributes and an inline onclick to call removeItemFromCart() directly.  The
-            // multiplication sign (×) is more visible than a hyphen.  Replace single quotes in
-            // tier names to avoid breaking the inline handler.
-            // Create a removal icon using a multiplication sign (×).  Do not
-            // attach inline click handlers here; instead rely on event
-            // delegation on the document to intercept clicks on elements
-            // with the remove-item class.  The dataset attributes allow us
-            // to identify which item and tier to remove when the icon is
-            // clicked.
-            // Use window.removeItemFromCart in inline handler so the function is
-            // resolved on the global object.  Escaping single quotes in
-            // tier names prevents syntax errors if the tier contains an apostrophe.
-            // The removal icon uses the class 'remove-item' and stores the item index and tier
-            // in data attributes.  A global click handler listens for clicks on
-            // elements with this class and calls removeItemFromCart() once.
-            const removeBtn = `<span class="remove-item" data-idx="${idx}" data-tier="${tierName}">&times;</span>`;
-            entriesHtml.push(`<div>${removeBtn}${lineText}</div>`);
+            const text = `${count} ${tierName} ${item.name} (${detail})`;
+            if (!grouped[crafter]) grouped[crafter] = [];
+            grouped[crafter].push({ idx, tierName, text });
           }
         });
       });
-      if (entriesHtml.length === 0) {
+      const crafterNames = Object.keys(grouped);
+      if (crafterNames.length === 0) {
         listDiv.textContent = 'No adornments selected';
       } else {
-        listDiv.innerHTML = entriesHtml.join('');
-
-        // Attach click handlers to each remove-item element.  Using direct
-        // binding avoids multiple event handlers firing and ensures that
-        // clicking the removal icon only subtracts one item.  Stop
-        // propagation so that clicks on the icon do not trigger other
-        // handlers.
+        let html = '';
+        // Sort crafters alphabetically for consistent ordering
+        crafterNames.sort().forEach(crafter => {
+          html += `<div class="crafter-heading"># ${crafter}</div>`;
+          grouped[crafter].forEach(entry => {
+            const removeBtn = `<span class="remove-item" data-idx="${entry.idx}" data-tier="${entry.tierName}">&times;</span>`;
+            html += `<div>${removeBtn}${entry.text}</div>`;
+          });
+        });
+        listDiv.innerHTML = html;
+        // Attach click handlers to removal icons; ensure only one handler per element
         listDiv.querySelectorAll('.remove-item').forEach(el => {
-          el.addEventListener('click', (evt) => {
+          el.addEventListener('click', evt => {
             evt.stopPropagation();
             const idxStr = el.getAttribute('data-idx');
             const tierStr = el.getAttribute('data-tier');
@@ -1334,15 +1332,15 @@
      */
     function copyCraftingListToClipboard() {
       const lines = [];
-      // Section 1: Selected adornments
-      let any = false;
+      // Section 1: Selected adornments grouped by crafter
+      const grouped = {};
       adornmentsData.forEach((item, idx) => {
         const counts = itemCountsByTier[idx];
         if (!counts) return;
+        const crafter = item.madeBy || 'Unknown';
         Object.keys(counts).forEach(tierName => {
           const count = counts[tierName];
           if (count > 0) {
-            // Retrieve the stat value for this item at the given tier.
             const value = (item[tierName] !== null && item[tierName] !== undefined) ? item[tierName] : '';
             const statFormatted = item.stat ? item.stat.replace(/vs\./gi, 'Versus') : '';
             let detail;
@@ -1351,18 +1349,32 @@
             } else {
               detail = `${item.slot}${statFormatted ? ', ' + statFormatted : ''}`.trim();
             }
-            lines.push(`${count} ${tierName} ${item.name} (${detail})`);
-            any = true;
+            const line = `${count} ${tierName} ${item.name} (${detail})`;
+            if (!grouped[crafter]) grouped[crafter] = [];
+            grouped[crafter].push(line);
           }
         });
       });
-      if (!any) {
+      const crafterNames = Object.keys(grouped).sort();
+      if (crafterNames.length === 0) {
         lines.push('No adornments selected');
+      } else {
+        crafterNames.forEach(crafter => {
+          lines.push(`# ${crafter}`);
+          grouped[crafter].forEach(line => {
+            lines.push(line);
+          });
+          // Add a blank line between crafter sections for readability
+          lines.push('');
+        });
       }
-      // Blank line between sections
+      // Remove the last blank line if present
+      if (lines.length > 0 && lines[lines.length - 1] === '') {
+        lines.pop();
+      }
+      // Append materials section
       lines.push('');
       lines.push('Materials:');
-      // Build materials list: aggregated totals per tier and type
       const materialLines = [];
       materialsCartTotals.forEach((totals, tierIndex) => {
         const tierInfo = materialData[tierIndex];
