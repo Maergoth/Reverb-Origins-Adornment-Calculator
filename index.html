@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reverb Origins Adornment Calculator</title>
+  <title>Reverb Origins Adornment Calculator (Updated)</title>
   <style>
     /* Root variables for easy theming */
     :root {
@@ -319,8 +319,8 @@
           <select id="crafterFilter"></select>
         </div>
         <div>
-          <label for="keywordFilter">Keyword:</label>
-          <input type="text" id="keywordFilter" placeholder="Type to search">
+        <label for="keywordFilter">Keyword:</label>
+        <input type="text" id="keywordFilter" placeholder="Type to search">
         </div>
         <div>
         <label><input type="checkbox" id="rokToggle"> ROK</label>
@@ -369,9 +369,15 @@
     </div>
   </div>
   <script>
-    // Flag to determine if ROK era dataset should be visible
+    // Flag to determine if ROK era (Tier 8) dataset should be visible.
+    // When includeRok is false, the Smoldering column and items with only a Smoldering tier
+    // will be hidden. There is no need to flag individual adornments; instead we compute
+    // whether an item has any non‑Smoldering tier values on the fly.
     let includeRok = true;
-    // Adornment data including Tier 8 values. Items that only appear in Tier 8 have hideWhenT8Unchecked set.
+
+    // Adornment data including Tier 8 values.  No reset of Smoldering values occurs here; all
+    // tiers are preserved as specified in the dataset.  Items with only a Smoldering
+    // value (and no other tier values) will be filtered out when includeRok is false.
     const adornmentsData = [
       { slot: "Any Weapon", name: "Magi's Second Sight", madeBy: "Tailor", stat: "Damage Spell Crit Chance", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "1%", Scintillating: null, Smoldering: "2%", quality: "Fabled" },
       { slot: "Chest", name: "Mystic Applique", madeBy: "Alchemist", stat: "vs. Magic", Flickering: "10", Shimmering: "25", Sparkling: "40", Glimmering: "55", Luminous: "70", Lambent: "85", Scintillating: "100", Smoldering: "115", quality: "Legendary" },
@@ -409,7 +415,7 @@
       { slot: "Head", name: "Epiphanic Imprint", madeBy: "Tailor", stat: "Power", Flickering: "10", Shimmering: null, Sparkling: "30", Glimmering: null, Luminous: "50", Lambent: null, Scintillating: "100", Smoldering: null, quality: "Treasured" },
       { slot: "Head", name: "Psychic Imprint", madeBy: "Tailor", stat: "vs. Mental", Flickering: "10", Shimmering: "25", Sparkling: "40", Glimmering: "55", Luminous: "70", Lambent: "85", Scintillating: "100", Smoldering: "115", quality: "Treasured" },
       { slot: "Head", name: "Savvy Imprint", madeBy: "Tailor", stat: "Wis", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
-      { slot: "Head", name: "Blessed Imprint", madeBy: "Tailor", stat: "Heal Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: "3%", quality: "Fabled", hidewhent8unchecked: false },
+      { slot: "Head", name: "Blessed Imprint", madeBy: "Tailor", stat: "Heal Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: "3%", quality: "Fabled" },
       { slot: "Legs", name: "Brawny Brace", madeBy: "Armourer", stat: "Str", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
       { slot: "Legs", name: "Gritty Brace", madeBy: "Armourer", stat: "Sta", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
       { slot: "Legs", name: "Septic Brace", madeBy: "Armourer", stat: "vs. Disease", Flickering: "10", Shimmering: "25", Sparkling: "40", Glimmering: "55", Luminous: "70", Lambent: "85", Scintillating: "100", Smoldering: "115", quality: "Treasured" },
@@ -437,7 +443,7 @@
       { slot: "Piercing Weapon", name: "Viral Temper", madeBy: "Transmuter", stat: "Disease Proc & Slow (5%)", Flickering: "13/4.0%", Shimmering: "112/5.8%", Sparkling: "168/7.6%", Glimmering: "222/9.6%", Luminous: "268/11.8%", Lambent: "309/14.1%", Scintillating: "349/16.7%", Smoldering: "501/17.7%", quality: "Treasured" },
       { slot: "Primary", name: "Clemency of the Pontiff", madeBy: "Armourer", stat: "Heal Spells", Flickering: "10", Shimmering: "15", Sparkling: "20", Glimmering: "25", Luminous: "30", Lambent: "35", Scintillating: "40", Smoldering: "45", quality: "Legendary" },
       { slot: "Primary", name: "Focus of the Pontiff", madeBy: "Alchemist", stat: "Power Proc on Heal (5%)", Flickering: null, Shimmering: null, Sparkling: "17", Glimmering: "28", Luminous: "44", Lambent: "63", Scintillating: "85", Smoldering: "102", quality: "Fabled" },
-      { slot: "Primary", name: "Balanced Ayr Stone", madeBy: "Transmuter", stat: "Ripost/Parry", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "1%", Scintillating: "2%", Smoldering: "3%", quality: "Fabled", hidewhent8unchecked: false },
+      { slot: "Primary", name: "Balanced Ayr Stone", madeBy: "Transmuter", stat: "Ripost/Parry", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "1%", Scintillating: "2%", Smoldering: "3%", quality: "Fabled" },
       { slot: "Primary", name: "Pontiff's Second Sight", madeBy: "Provisioner", stat: "Heal Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: "3%", quality: "Fabled" },
       { slot: "Primary", name: "Focus of the Magi", madeBy: "Sage", stat: "Power Proc (5%)", Flickering: null, Shimmering: null, Sparkling: "17", Glimmering: "28", Luminous: "44", Lambent: "63", Scintillating: "85", Smoldering: "102", quality: "Fabled" },
       { slot: "Primary", name: "Finesse of the Pontiff", madeBy: "Woodworker", stat: "AE Decrease Threat (5%)", Flickering: null, Shimmering: null, Sparkling: "172", Glimmering: "334", Luminous: "574", Lambent: "897", Scintillating: "1296", Smoldering: "1617", quality: "Fabled" },
@@ -447,8 +453,8 @@
       { slot: "Bow", name: "Serpentine Composite Gear", madeBy: "Tinker", stat: "Poison Damage", Flickering: null, Shimmering: null, Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "12", Smoldering: "14", quality: "Treasured" },
       { slot: "Bow", name: "Glacial Composite Gear", madeBy: "Tinker", stat: "Cold Damage", Flickering: null, Shimmering: null, Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "12", Smoldering: "14", quality: "Treasured" },
       { slot: "Bow", name: "Judicious Composite Gear", madeBy: "Tinker", stat: "Damage per Second", Flickering: "0.8", Shimmering: "1", Sparkling: "2", Glimmering: "4", Luminous: "6", Lambent: "8", Scintillating: "10", Smoldering: "12", quality: "Fabled" },
-      { slot: "Bow", name: "Molten Composite Gear", madeBy: "Tinker", stat: "Heat Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: null, Smoldering: "14", quality: "Treasured", hidewhent8unchecked: false },
-      { slot: "Bow", name: "Vampiric Composite Gear", madeBy: "Tinker", stat: "Divine Damage & Heal", Flickering: null, Shimmering: "43/40", Sparkling: "63/60", Glimmering: "84/80", Luminous: "105/100", Lambent: "125/120", Scintillating: "149/140", Smoldering: "274/184", quality: "Legendary", hideWhenT8Unchecked: false },
+      { slot: "Bow", name: "Molten Composite Gear", madeBy: "Tinker", stat: "Heat Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: null, Smoldering: "14", quality: "Treasured" },
+      { slot: "Bow", name: "Vampiric Composite Gear", madeBy: "Tinker", stat: "Divine Damage & Heal", Flickering: null, Shimmering: "43/40", Sparkling: "63/60", Glimmering: "84/80", Luminous: "105/100", Lambent: "125/120", Scintillating: "149/140", Smoldering: "274/184", quality: "Legendary" },
       { slot: "Throwing Weapon", name: "Honing Easyloader", madeBy: "Tailor", stat: "Piercing Damage", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "12", Smoldering: "14", quality: "Treasured" },
       { slot: "Throwing Weapon", name: "Judicious Easyloader", madeBy: "Tailor", stat: "DPS", Flickering: null, Shimmering: "1", Sparkling: "2", Glimmering: "4", Luminous: "6", Lambent: "8", Scintillating: "10", Smoldering: "12", quality: "Fabled" },
       { slot: "Throwing Weapon", name: "Phantom Easyloader", madeBy: "Tailor", stat: "Power Tap & Buff (10%)", Flickering: "26/16", Shimmering: "48/40", Sparkling: "68/60", Glimmering: "90/80", Luminous: "113/100", Lambent: "135/120", Scintillating: "158/140", Smoldering: "253/170", quality: "Legendary" },
@@ -465,12 +471,12 @@
       { slot: "Ring", name: "Septic Polish", madeBy: "Alchemist", stat: "vs. Disease", Flickering: "10", Shimmering: "25", Sparkling: "40", Glimmering: "55", Luminous: "70", Lambent: "85", Scintillating: "100", Smoldering: "115", quality: "Treasured" },
       { slot: "Ring", name: "Thriving Polish", madeBy: "Alchemist", stat: "Health/Power", Flickering: null, Shimmering: "10", Sparkling: null, Glimmering: "20", Luminous: null, Lambent: "35", Scintillating: null, Smoldering: "60", quality: "Fabled" },
       { slot: "Ring", name: "Venom Laced Polish", madeBy: "Alchemist", stat: "vs. Poison", Flickering: "10", Shimmering: "25", Sparkling: "40", Glimmering: "55", Luminous: "70", Lambent: "85", Scintillating: "100", Smoldering: "115", quality: "Treasured" },
-      { slot: "Shield", name: "Balanced Strut", madeBy: "Woodworker", stat: "Block", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: null, quality: "Fabled", hidewhent8unchecked: false },
-      { slot: "Shield", name: "Blessed Strut", madeBy: "Woodworker", stat: "Heal Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: null, quality: "Fabled", hidewhent8unchecked: false },
-      { slot: "Shield", name: "Intercepting Strut", madeBy: "Woodworker", stat: "Heal Proc", Flickering: "1% 8-10", Shimmering: "2% 21-25", Sparkling: "3% 33-39", Glimmering: "4% 45-55", Luminous: "6% 60-73", Lambent: "8% 76-92", Scintillating: "10% 91-111", Smoldering: "10% 124-152", quality: "Legendary" },
+      { slot: "Shield", name: "Balanced Strut", madeBy: "Woodworker", stat: "Block", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: null, quality: "Fabled" },
+      { slot: "Shield", name: "Blessed Strut", madeBy: "Woodworker", stat: "Heal Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: null, quality: "Fabled" },
+      { slot: "Shield", name: "Intercepting Strut", madeBy: "Woodworker", stat: "Heal Proc", Flickering: "1% 8-10", Shimmering: "2% 21-25", Sparkling: "3% 30-36", Glimmering: "4% 42-51", Luminous: "6% 60-73", Lambent: "8% 76-92", Scintillating: "10% 91-111", Smoldering: "10% 124-152", quality: "Legendary" },
       { slot: "Shield", name: "Reinforced Strut", madeBy: "Woodworker", stat: "Mitigation", Flickering: "7", Shimmering: "17", Sparkling: "27", Glimmering: "37", Luminous: "47", Lambent: "57", Scintillating: "67", Smoldering: "77", quality: "Legendary" },
       { slot: "Shield", name: "Spiked Strut", madeBy: "Woodworker", stat: "Damage Shield", Flickering: "6", Shimmering: "14", Sparkling: "23", Glimmering: "33", Luminous: "45", Lambent: "55", Scintillating: "65", Smoldering: "76", quality: "Legendary" },
-      { slot: "Shield", name: "Tactical Strut", madeBy: "Woodworker", stat: "Melee Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "1%", Scintillating: null, Smoldering: "2%", quality: "Fabled", hidewhent8unchecked: false },
+      { slot: "Shield", name: "Tactical Strut", madeBy: "Woodworker", stat: "Melee Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "1%", Scintillating: null, Smoldering: "2%", quality: "Fabled" },
       { slot: "Shoulder", name: "Brawny Straps", madeBy: "Tailor", stat: "Str", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
       { slot: "Shoulder", name: "Gritty Straps", madeBy: "Tailor", stat: "Sta", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
       { slot: "Shoulder", name: "Rugged Straps", madeBy: "Tailor", stat: "Health", Flickering: "10", Shimmering: null, Sparkling: "30", Glimmering: null, Luminous: "50", Lambent: null, Scintillating: "100", Smoldering: null, quality: "Treasured" },
@@ -491,7 +497,7 @@
       { slot: "Symbol", name: "Metaphysical Ornament", madeBy: "Carpenter", stat: "In-Combat Power Regen", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: "1", Luminous: null, Lambent: null, Scintillating: null, Smoldering: "2", quality: "Legendary" },
       { slot: "Symbol", name: "Molten Ornament", madeBy: "Carpenter", stat: "Heat Damage", Flickering: null, Shimmering: "5", Sparkling: "10", Glimmering: "20", Luminous: "30", Lambent: "40", Scintillating: "45", Smoldering: "50", quality: "Legendary" },
       { slot: "Symbol", name: "Noxious Ornament", madeBy: "Carpenter", stat: "All Noxious Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: "5", Luminous: "10", Lambent: "20", Scintillating: "25", Smoldering: "30", quality: "Fabled" },
-      { slot: "Symbol", name: "Occult Ornament", madeBy: "Carpenter", stat: "All Spell Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "15", Scintillating: null, Smoldering: null, quality: "Fabled", hidewhent8unchecked: false },
+      { slot: "Symbol", name: "Occult Ornament", madeBy: "Carpenter", stat: "All Spell Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "15", Scintillating: null, Smoldering: null, quality: "Fabled" },
       { slot: "Symbol", name: "Righteous Ornament", madeBy: "Carpenter", stat: "Divine Damage", Flickering: null, Shimmering: "5", Sparkling: "10", Glimmering: "20", Luminous: "30", Lambent: "40", Scintillating: "45", Smoldering: "50", quality: "Legendary" },
       { slot: "Symbol", name: "Runic Ornament", madeBy: "Carpenter", stat: "Magic Damage", Flickering: null, Shimmering: "5", Sparkling: "10", Glimmering: "20", Luminous: "30", Lambent: "40", Scintillating: "45", Smoldering: "50", quality: "Legendary" },
       { slot: "Symbol", name: "Serpentine Ornament", madeBy: "Carpenter", stat: "Poison Damage", Flickering: null, Shimmering: "5", Sparkling: "10", Glimmering: "20", Luminous: "30", Lambent: "40", Scintillating: "45", Smoldering: "50", quality: "Legendary" },
@@ -506,13 +512,13 @@
       { slot: "Two-Handed Slashing", name: "Vampiric Pommel", madeBy: "Transmuter", stat: "Divine Damage & Heal Proc (10%)", Flickering: "26/16", Shimmering: "66/40", Sparkling: "99/60", Glimmering: "131/80", Luminous: "158/100", Lambent: "181/120", Scintillating: "205/140", Smoldering: "274/184", quality: "Legendary" },
       { slot: "Two-Handed Weapon", name: "Rapid Handgrips", madeBy: "Transmuter", stat: "Attack Speed", Flickering: null, Shimmering: null, Sparkling: "2", Glimmering: "5", Luminous: "10", Lambent: "15", Scintillating: "20", Smoldering: "25", quality: "Fabled" },
       { slot: "Waist", name: "Archmage's Buckle", madeBy: "Armourer", stat: "Disruption & Subjugation", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: "2", Luminous: "3", Lambent: "4", Scintillating: "5", Smoldering: "6", quality: "Legendary" },
-      { slot: "Waist", name: "Combative Buckle", madeBy: "Armourer", stat: "Combat Art Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: null, Smoldering: "30", quality: "Fabled", hidewhent8unchecked: false },
+      { slot: "Waist", name: "Combative Buckle", madeBy: "Armourer", stat: "Combat Art Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: null, Smoldering: "30", quality: "Fabled" },
       { slot: "Waist", name: "Fast Action Buckle", madeBy: "Armourer", stat: "Ranged Crit", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: null, quality: "Fabled" },
       { slot: "Waist", name: "Spry Buckle", madeBy: "Armourer", stat: "Attack Speed", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: "1", Scintillating: "2", Smoldering: "3", quality: "Legendary" },
       { slot: "Wrist", name: "Agile Fastening", madeBy: "Alchemist", stat: "Agi", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
-      { slot: "Wrist", name: "Balanced Fastening", madeBy: "Sage", stat: "Block", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: "3%", quality: "Fabled", hideWhenT8Unchecked: false },
+      { slot: "Wrist", name: "Balanced Fastening", madeBy: "Sage", stat: "Block", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: "1%", Smoldering: "3%", quality: "Fabled" },
       { slot: "Wrist", name: "Brawny Fastening", madeBy: "Provisioner", stat: "Str", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
-      { slot: "Wrist", name: "Combative Buckle", madeBy: "Alchemist", stat: "Combat Art Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: null, Smoldering: "30", quality: "Fabled", hidewhent8unchecked: false },
+      { slot: "Wrist", name: "Combative Buckle", madeBy: "Alchemist", stat: "Combat Art Damage", Flickering: null, Shimmering: null, Sparkling: null, Glimmering: null, Luminous: null, Lambent: null, Scintillating: null, Smoldering: "30", quality: "Fabled" },
       { slot: "Wrist", name: "Diverting Fastening", madeBy: "Jeweller", stat: "Heal on Deflection", Flickering: "1% 7-9", Shimmering: "2% 18-22", Sparkling: "3% 30-36", Glimmering: "4% 42-51", Luminous: "6% 57-69", Lambent: "8% 72-88", Scintillating: "10% 88-107", Smoldering: "10% 124-152", quality: "Fabled" },
       { slot: "Wrist", name: "Fiery Fastening", madeBy: "Provisioner", stat: "vs. Heat", Flickering: "10", Shimmering: "25", Sparkling: "40", Glimmering: "55", Luminous: "70", Lambent: "85", Scintillating: "100", Smoldering: "115", quality: "Treasured" },
       { slot: "Wrist", name: "Gritty Fastening", madeBy: "Woodworker", stat: "Sta", Flickering: "1", Shimmering: "2", Sparkling: "4", Glimmering: "6", Luminous: "8", Lambent: "10", Scintillating: "14", Smoldering: "16", quality: "Treasured" },
@@ -525,22 +531,6 @@
     ];
 
     // Transmuted yield data with Tier 8 added
-    // Reset Smoldering values for pre-existing items.  Only items flagged with hideWhenT8Unchecked
-    // represent the Tier 8 dataset; existing items should not have Smoldering values.  This loop
-    // sets the Smoldering field to null for any item that does not explicitly opt into the T8 dataset.
-    adornmentsData.forEach(item => {
-      // Determine the era of each item. Items flagged with hideWhenT8Unchecked belong to the
-      // Rise of Kunark (ROK) era, while all others are part of the Echoes of Faydwer (EOF) era.
-      // Assign the era and reset Smoldering values for EOF items.
-      if (item.hideWhenT8Unchecked) {
-        item.era = 'ROK';
-      } else {
-        item.era = 'EOF';
-        // There are no Tier 8 values for EOF adornments.
-        item.Smoldering = null;
-      }
-    });
-
     const transmutedData = [
       { tier: "Flickering", treasured: { powder: 1, fragment: 2 }, legendary: { powder: 1, fragment: 1, infusion: 1 }, fabled: { powder: 1, fragment: 1, infusion: 1, mana: 1 } },
       { tier: "Shimmering", treasured: { powder: 1, fragment: 3 }, legendary: { powder: 2, fragment: 2, infusion: 1 }, fabled: { powder: 1, fragment: 1, infusion: 1, mana: 1 } },
@@ -743,6 +733,7 @@
           rowsAdded++;
         });
       }
+      // Add placeholder rows up to 2 for consistent table height
       for (let i = 0; rowsAdded + i < 2; i++) {
         const tierIndex = rowsAdded + i;
         if (tierIndex >= materialData.length) break;
@@ -840,6 +831,12 @@
       });
     }
 
+    // Helper to determine if an item has any non-Smoldering tiers with values
+    function hasNonSmolderingTier(item) {
+      const tiers = ['Flickering','Shimmering','Sparkling','Glimmering','Luminous','Lambent','Scintillating'];
+      return tiers.some(t => item[t] !== null && item[t] !== undefined);
+    }
+
     function renderAdornmentsTable() {
       const slotFilter = document.getElementById('slotFilter').value;
       const tierFilter = document.getElementById('tierFilter').value;
@@ -848,15 +845,20 @@
       const tbody = document.getElementById('adornmentTable').querySelector('tbody');
       tbody.innerHTML = '';
       adornmentsData.forEach((item, idx) => {
-        // Skip ROK-era adornments when the ROK toggle is not checked
-        if (!includeRok && item.era === 'ROK') return;
+        // Filter by slot
         if (slotFilter !== 'All' && item.slot !== slotFilter) return;
+        // Filter by crafter
         if (crafterFilter !== 'All' && item.madeBy !== crafterFilter) return;
+        // Keyword search across columns
         if (keywordFilter) {
           const combined = `${item.slot || ''} ${item.name || ''} ${item.madeBy || ''} ${item.stat || ''} ${item.quality || ''}`.toLowerCase();
           if (!combined.includes(keywordFilter)) return;
         }
+        // Tier filter: only include items that have a value in the selected tier
         if (tierFilter !== 'All' && item[tierFilter] == null) return;
+        // When ROK toggle is off (includeRok = false), hide items that only have a Smoldering value and no other tiers
+        if (!includeRok && !hasNonSmolderingTier(item) && (item.Smoldering !== null && item.Smoldering !== undefined)) return;
+        // Build table row
         const tr = document.createElement('tr');
         [item.slot, item.name, item.madeBy, item.stat].forEach(val => {
           const td = document.createElement('td');
@@ -867,29 +869,23 @@
         tierNames.forEach(tierName => {
           const value = item[tierName];
           const td = document.createElement('td');
-          // Always apply the tier-cell class to ensure a consistent minimum width
           td.classList.add('tier-cell');
-          // Apply a class for the Smoldering column for potential future styling
           if (tierName === 'Smoldering') {
             td.classList.add('smoldering-col');
           }
           if (value !== null && value !== undefined) {
-            // Attach data attributes so clicks can identify the item and tier
             td.dataset.idx = idx;
             td.dataset.tier = tierName;
             td.dataset.quality = item.quality.toLowerCase();
-            // Render the value in a span
             const valueSpan = document.createElement('span');
             valueSpan.className = 'cell-value';
             valueSpan.textContent = value;
             td.appendChild(valueSpan);
-            // Add a badge to show how many times this item-tier has been added to the cart
             const countBadge = document.createElement('span');
             countBadge.className = 'cell-count';
             countBadge.dataset.idx = idx;
             countBadge.dataset.tier = tierName;
             td.appendChild(countBadge);
-            // Left‑click to add and right‑click to remove
             td.addEventListener('mousedown', function(e) {
               e.preventDefault();
               if (e.button === 0) {
@@ -898,12 +894,10 @@
                 removeItemFromCart(idx, tierName);
               }
             });
-            // Prevent default context menu on right‑click
             td.addEventListener('contextmenu', function(e) {
               e.preventDefault();
             });
           } else {
-            // Leave empty cells blank; keep default cursor so they don't appear clickable
             td.textContent = '';
             td.style.cursor = 'default';
           }
@@ -1131,9 +1125,8 @@
           calcSectionEl.classList.toggle('collapsed');
         });
       }
-      // ROK toggle: include or exclude the Rise of Kunark dataset.  When unchecked, adornments
-      // flagged as ROK are filtered out and the Smoldering column is hidden entirely.  When
-      // checked, ROK items and the Smoldering column are shown.
+      // ROK toggle: include or exclude the Rise of Kunark dataset (Tier 8).  When unchecked,
+      // adornments that only have a Smoldering value are filtered out and the Smoldering column is hidden entirely.
       const rokToggle = document.getElementById('rokToggle');
       rokToggle.addEventListener('change', function() {
         includeRok = this.checked;
